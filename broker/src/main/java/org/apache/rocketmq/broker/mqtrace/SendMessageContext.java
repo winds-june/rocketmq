@@ -40,12 +40,11 @@ public class SendMessageContext {
     private long bornTimeStamp;
     private MessageType msgType = MessageType.Trans_msg_Commit;
     private boolean isSuccess = false;
-
+    //For Commercial
     private String commercialOwner;
     private BrokerStatsManager.StatsType commercialSendStats;
     private int commercialSendSize;
     private int commercialSendTimes;
-    private String namespace;
 
     public boolean isSuccess() {
         return isSuccess;
@@ -229,13 +228,5 @@ public class SendMessageContext {
 
     public void setCommercialSendTimes(final int commercialSendTimes) {
         this.commercialSendTimes = commercialSendTimes;
-    }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
     }
 }

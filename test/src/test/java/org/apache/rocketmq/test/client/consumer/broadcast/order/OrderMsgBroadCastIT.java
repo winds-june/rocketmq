@@ -29,21 +29,14 @@ import org.apache.rocketmq.test.util.TestUtils;
 import org.apache.rocketmq.test.util.VerifyUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.google.common.truth.Truth.assertThat;
 
-/**
- * Currently, dose not support the ordered broadcast message
- */
-@Ignore
 public class OrderMsgBroadCastIT extends BaseBroadCastIT {
     private static Logger logger = Logger.getLogger(OrderMsgBroadCastIT.class);
     private RMQNormalProducer producer = null;
     private String topic = null;
-
-    private int broadcastConsumeTime = 1 * 60 * 1000;
 
     @Before
     public void setUp() {
@@ -54,7 +47,7 @@ public class OrderMsgBroadCastIT extends BaseBroadCastIT {
 
     @After
     public void tearDown() {
-        super.shutdown();
+        super.shutDown();
     }
 
     @Test
@@ -70,12 +63,13 @@ public class OrderMsgBroadCastIT extends BaseBroadCastIT {
         List<MessageQueue> mqs = producer.getMessageQueue();
         MessageQueueMsg mqMsgs = new MessageQueueMsg(mqs, msgSize);
         producer.send(mqMsgs.getMsgsWithMQ());
-        consumer1.getListener().waitForMessageConsume(producer.getAllMsgBody(), broadcastConsumeTime);
-        consumer2.getListener().waitForMessageConsume(producer.getAllMsgBody(), broadcastConsumeTime);
 
-        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer1.getListener()).getMsgs()))
+        consumer1.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+        consumer2.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+
+        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer1.getListner()).getMsgs()))
             .isEqualTo(true);
-        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer2.getListener()).getMsgs()))
+        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer2.getListner()).getMsgs()))
             .isEqualTo(true);
     }
 }

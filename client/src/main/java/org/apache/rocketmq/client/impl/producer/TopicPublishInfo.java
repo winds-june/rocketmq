@@ -16,18 +16,38 @@
  */
 package org.apache.rocketmq.client.impl.producer;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.rocketmq.client.common.ThreadLocalIndex;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Topic发布信息
+ */
 public class TopicPublishInfo {
+
+    /**
+     * 是否顺序消息
+     */
     private boolean orderTopic = false;
+    /**
+     * 是否有路由信息
+     */
     private boolean haveTopicRouterInfo = false;
+    /**
+     * 消息队列数组
+     */
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
+    /**
+     * 线程变量（Index）
+     */
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
+    /**
+     * Topic消息路由信息
+     */
     private TopicRouteData topicRouteData;
 
     public boolean isOrderTopic() {
@@ -38,6 +58,11 @@ public class TopicPublishInfo {
         this.orderTopic = orderTopic;
     }
 
+    /**
+     * Topic 是否正常：消息队列不为空
+     *
+     * @return 是否正常
+     */
     public boolean ok() {
         return null != this.messageQueueList && !this.messageQueueList.isEmpty();
     }
@@ -58,6 +83,11 @@ public class TopicPublishInfo {
         this.sendWhichQueue = sendWhichQueue;
     }
 
+    /**
+     * Topic 是否有路由信息。例如 Broker 地址，Topic的读写权限等
+     *
+     * @return 是否有路由信息
+     */
     public boolean isHaveTopicRouterInfo() {
         return haveTopicRouterInfo;
     }
@@ -66,6 +96,12 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
+    /**
+     * 默认策略下的MessageQueue选择
+     *
+     * @param lastBrokerName
+     * @return
+     */
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
@@ -73,8 +109,7 @@ public class TopicPublishInfo {
             int index = this.sendWhichQueue.getAndIncrement();
             for (int i = 0; i < this.messageQueueList.size(); i++) {
                 int pos = Math.abs(index++) % this.messageQueueList.size();
-                if (pos < 0)
-                    pos = 0;
+                if (pos < 0) { pos = 0; }
                 MessageQueue mq = this.messageQueueList.get(pos);
                 if (!mq.getBrokerName().equals(lastBrokerName)) {
                     return mq;
@@ -84,11 +119,15 @@ public class TopicPublishInfo {
         }
     }
 
+    /**
+     * 直接选择上次发送队列的下一位
+     *
+     * @return
+     */
     public MessageQueue selectOneMessageQueue() {
         int index = this.sendWhichQueue.getAndIncrement();
         int pos = Math.abs(index) % this.messageQueueList.size();
-        if (pos < 0)
-            pos = 0;
+        if (pos < 0) { pos = 0; }
         return this.messageQueueList.get(pos);
     }
 

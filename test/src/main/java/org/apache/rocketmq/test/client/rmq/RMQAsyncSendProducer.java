@@ -18,7 +18,6 @@
 package org.apache.rocketmq.test.client.rmq;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
@@ -26,11 +25,10 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.client.producer.SendCallback;
-import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.test.clientinterface.AbstractMQProducer;
-import org.apache.rocketmq.test.sendresult.ResultWrapper;
+import org.apache.rocketmq.test.sendresult.SendResult;
 import org.apache.rocketmq.test.util.RandomUtil;
 import org.apache.rocketmq.test.util.TestUtil;
 
@@ -40,19 +38,19 @@ public class RMQAsyncSendProducer extends AbstractMQProducer {
     private String nsAddr = null;
     private DefaultMQProducer producer = null;
     private SendCallback sendCallback = null;
-    private List<SendResult> successSendResult = Collections.synchronizedList(new ArrayList<SendResult>());
-    private AtomicInteger exceptionMsgCount = new AtomicInteger(0);
+    private List<org.apache.rocketmq.client.producer.SendResult> successSendResult = new ArrayList<org.apache.rocketmq.client.producer.SendResult>();
+    private AtomicInteger exceptionMsgCount = new AtomicInteger(
+        0);
     private int msgSize = 0;
 
     public RMQAsyncSendProducer(String nsAddr, String topic) {
         super(topic);
         this.nsAddr = nsAddr;
         sendCallback = new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
+            public void onSuccess(org.apache.rocketmq.client.producer.SendResult sendResult) {
                 successSendResult.add(sendResult);
             }
-            @Override
+
             public void onException(Throwable throwable) {
                 exceptionMsgCount.getAndIncrement();
             }
@@ -66,7 +64,7 @@ public class RMQAsyncSendProducer extends AbstractMQProducer {
         return successSendResult.size();
     }
 
-    public List<SendResult> getSuccessSendResult() {
+    public List<org.apache.rocketmq.client.producer.SendResult> getSuccessSendResult() {
         return successSendResult;
     }
 
@@ -94,12 +92,10 @@ public class RMQAsyncSendProducer extends AbstractMQProducer {
         }
     }
 
-    @Override
-    public ResultWrapper send(Object msg, Object arg) {
+    public SendResult send(Object msg, Object arg) {
         return null;
     }
 
-    @Override
     public void shutdown() {
         producer.shutdown();
     }

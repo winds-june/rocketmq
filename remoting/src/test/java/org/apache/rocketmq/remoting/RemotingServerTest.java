@@ -26,7 +26,12 @@ import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
 import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.apache.rocketmq.remoting.exception.RemotingTooMuchRequestException;
-import org.apache.rocketmq.remoting.netty.*;
+import org.apache.rocketmq.remoting.netty.NettyClientConfig;
+import org.apache.rocketmq.remoting.netty.NettyRemotingClient;
+import org.apache.rocketmq.remoting.netty.NettyRemotingServer;
+import org.apache.rocketmq.remoting.netty.NettyRequestProcessor;
+import org.apache.rocketmq.remoting.netty.NettyServerConfig;
+import org.apache.rocketmq.remoting.netty.ResponseFuture;
 import org.apache.rocketmq.remoting.protocol.LanguageCode;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 import org.junit.AfterClass;
@@ -43,7 +48,7 @@ public class RemotingServerTest {
     public static RemotingServer createRemotingServer() throws InterruptedException {
         NettyServerConfig config = new NettyServerConfig();
         RemotingServer remotingServer = new NettyRemotingServer(config);
-        remotingServer.registerProcessor(0, new AsyncNettyRequestProcessor() {
+        remotingServer.registerProcessor(0, new NettyRequestProcessor() {
             @Override
             public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
                 request.setRemark("Hi " + ctx.channel().remoteAddress());
@@ -62,11 +67,8 @@ public class RemotingServerTest {
     }
 
     public static RemotingClient createRemotingClient() {
-        return createRemotingClient(new NettyClientConfig());
-    }
-
-    public static RemotingClient createRemotingClient(NettyClientConfig nettyClientConfig) {
-        RemotingClient client = new NettyRemotingClient(nettyClientConfig);
+        NettyClientConfig config = new NettyClientConfig();
+        RemotingClient client = new NettyRemotingClient(config);
         client.start();
         return client;
     }

@@ -18,23 +18,19 @@ package org.apache.rocketmq.common;
 
 public class MQVersion {
 
-    public static final int CURRENT_VERSION = Version.V4_7_1.ordinal();
+    public static final int CURRENT_VERSION = Version.V4_1_0_SNAPSHOT.ordinal();
 
     public static String getVersionDesc(int value) {
-        int length = Version.values().length;
-        if (value >= length) {
-            return Version.values()[length - 1].name();
+        try {
+            Version v = Version.values()[value];
+            return v.name();
+        } catch (Exception e) {
         }
 
-        return Version.values()[value].name();
+        return "HigherVersion";
     }
 
     public static Version value2Version(int value) {
-        int length = Version.values().length;
-        if (value >= length) {
-            return Version.values()[length - 1];
-        }
-
         return Version.values()[value];
     }
 
@@ -939,7 +935,5 @@ public class MQVersion {
 
         V5_9_9_SNAPSHOT,
         V5_9_9,
-
-        HIGHER_VERSION
     }
 }

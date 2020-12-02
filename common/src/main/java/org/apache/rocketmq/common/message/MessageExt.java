@@ -16,42 +16,75 @@
  */
 package org.apache.rocketmq.common.message;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import org.apache.rocketmq.common.TopicFilterType;
 import org.apache.rocketmq.common.sysflag.MessageSysFlag;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+
+/**
+ * Message封装,Broker用 MessageExtBrokerInner ,Client用 MessageClientExt
+ */
 public class MessageExt extends Message {
+
     private static final long serialVersionUID = 5720810158625748049L;
 
-    private String brokerName;
-
+    /**
+     * 队列编号
+     */
     private int queueId;
 
+    /**
+     * 存储的消息总大小
+     */
     private int storeSize;
-
+    /**
+     * 队列offset
+     */
     private long queueOffset;
     private int sysFlag;
+    /**
+     * 生成时间
+     */
     private long bornTimestamp;
+    /**
+     * 生成host
+     */
     private SocketAddress bornHost;
-
+    /**
+     * 存储时间。在broker生成
+     */
     private long storeTimestamp;
+    /**
+     * 存储host
+     */
     private SocketAddress storeHost;
+    /**
+     * 如果在Client,则存储uniqID;
+     * 如果在Broker,存储 ip:port+commitLogOffset
+     */
     private String msgId;
+    /**
+     * 消息存储时的位置信息
+     */
     private long commitLogOffset;
+    /**
+     * body crc
+     */
     private int bodyCRC;
     private int reconsumeTimes;
 
+    /**
+     * 事务Prepared消息的CommitLog
+     */
     private long preparedTransactionOffset;
 
     public MessageExt() {
     }
 
     public MessageExt(int queueId, long bornTimestamp, SocketAddress bornHost, long storeTimestamp,
-        SocketAddress storeHost, String msgId) {
+                      SocketAddress storeHost, String msgId) {
         this.queueId = queueId;
         this.bornTimestamp = bornTimestamp;
         this.bornHost = bornHost;
@@ -68,28 +101,16 @@ public class MessageExt extends Message {
         return TopicFilterType.SINGLE_TAG;
     }
 
-    public static ByteBuffer socketAddress2ByteBuffer(final SocketAddress socketAddress, final ByteBuffer byteBuffer) {
-        InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-        InetAddress address = inetSocketAddress.getAddress();
-        if (address instanceof Inet4Address) {
-            byteBuffer.put(inetSocketAddress.getAddress().getAddress(), 0, 4);
-        } else {
-            byteBuffer.put(inetSocketAddress.getAddress().getAddress(), 0, 16);
-        }
+    private static ByteBuffer socketAddress2ByteBuffer(final SocketAddress socketAddress, final ByteBuffer byteBuffer) {
+        InetSocketAddress inetSocketAddress = (InetSocketAddress)socketAddress;
+        byteBuffer.put(inetSocketAddress.getAddress().getAddress(), 0, 4);
         byteBuffer.putInt(inetSocketAddress.getPort());
         byteBuffer.flip();
         return byteBuffer;
     }
 
     public static ByteBuffer socketAddress2ByteBuffer(SocketAddress socketAddress) {
-        InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-        InetAddress address = inetSocketAddress.getAddress();
-        ByteBuffer byteBuffer;
-        if (address instanceof Inet4Address) {
-            byteBuffer = ByteBuffer.allocate(4 + 4);
-        } else {
-            byteBuffer = ByteBuffer.allocate(16 + 4);
-        }
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
         return socketAddress2ByteBuffer(socketAddress, byteBuffer);
     }
 
@@ -107,14 +128,6 @@ public class MessageExt extends Message {
 
     public ByteBuffer getStoreHostBytes(ByteBuffer byteBuffer) {
         return socketAddress2ByteBuffer(this.storeHost, byteBuffer);
-    }
-
-    public String getBrokerName() {
-        return brokerName;
-    }
-
-    public void setBrokerName(String brokerName) {
-        this.brokerName = brokerName;
     }
 
     public int getQueueId() {
@@ -142,20 +155,18 @@ public class MessageExt extends Message {
     }
 
     public String getBornHostString() {
-        if (null != this.bornHost) {
-            InetAddress inetAddress = ((InetSocketAddress) this.bornHost).getAddress();
-
-            return null != inetAddress ? inetAddress.getHostAddress() : null;
+        if (this.bornHost != null) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress)this.bornHost;
+            return inetSocketAddress.getAddress().getHostAddress();
         }
 
         return null;
     }
 
     public String getBornHostNameString() {
-        if (null != this.bornHost) {
-            InetAddress inetAddress = ((InetSocketAddress) this.bornHost).getAddress();
-
-            return null != inetAddress ? inetAddress.getHostName() : null;
+        if (this.bornHost != null) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress)this.bornHost;
+            return inetSocketAddress.getAddress().getHostName();
         }
 
         return null;
@@ -177,6 +188,11 @@ public class MessageExt extends Message {
         this.storeHost = storeHost;
     }
 
+    /**
+     * 客户端的MessageExt重写了此方法，默认用uniqID替代msgId
+     *
+     * @return
+     */
     public String getMsgId() {
         return msgId;
     }
@@ -192,10 +208,6 @@ public class MessageExt extends Message {
     public void setSysFlag(int sysFlag) {
         this.sysFlag = sysFlag;
     }
-
-    public void setStoreHostAddressV6Flag() { this.sysFlag = this.sysFlag | MessageSysFlag.STOREHOSTADDRESS_V6_FLAG; }
-
-    public void setBornHostV6Flag() { this.sysFlag = this.sysFlag | MessageSysFlag.BORNHOST_V6_FLAG; }
 
     public int getBodyCRC() {
         return bodyCRC;
@@ -247,7 +259,7 @@ public class MessageExt extends Message {
 
     @Override
     public String toString() {
-        return "MessageExt [brokerName=" + brokerName + ", queueId=" + queueId + ", storeSize=" + storeSize + ", queueOffset=" + queueOffset
+        return "MessageExt [queueId=" + queueId + ", storeSize=" + storeSize + ", queueOffset=" + queueOffset
             + ", sysFlag=" + sysFlag + ", bornTimestamp=" + bornTimestamp + ", bornHost=" + bornHost
             + ", storeTimestamp=" + storeTimestamp + ", storeHost=" + storeHost + ", msgId=" + msgId
             + ", commitLogOffset=" + commitLogOffset + ", bodyCRC=" + bodyCRC + ", reconsumeTimes="

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/**
+ * $Id: EndTransactionRequestHeader.java 1835 2013-05-16 02:00:50Z vintagewang@apache.org $
+ */
 package org.apache.rocketmq.common.protocol.header;
 
 import org.apache.rocketmq.common.sysflag.MessageSysFlag;
@@ -118,14 +121,9 @@ public class EndTransactionRequestHeader implements CommandCustomHeader {
 
     @Override
     public String toString() {
-        return "EndTransactionRequestHeader{" +
-            "producerGroup='" + producerGroup + '\'' +
-            ", tranStateTableOffset=" + tranStateTableOffset +
-            ", commitLogOffset=" + commitLogOffset +
-            ", commitOrRollback=" + commitOrRollback +
-            ", fromTransactionCheck=" + fromTransactionCheck +
-            ", msgId='" + msgId + '\'' +
-            ", transactionId='" + transactionId + '\'' +
-            '}';
+        return "EndTransactionRequestHeader [producerGroup=" + producerGroup + ", tranStateTableOffset="
+            + tranStateTableOffset + ", commitLogOffset=" + commitLogOffset + ", commitOrRollback="
+            + commitOrRollback + ", fromTransactionCheck=" + fromTransactionCheck + ", msgId=" + msgId
+            + "]";
     }
 }

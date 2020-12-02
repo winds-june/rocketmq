@@ -42,7 +42,7 @@ public class QueryMsgByIdExceptionIT extends BaseConf {
 
     @AfterClass
     public static void tearDown() {
-        shutdown();
+        shutDown();
     }
 
     @Test

@@ -34,6 +34,7 @@ public class KVConfigManagerTest extends NameServerInstanceTest {
 
     @Test
     public void testPutKVConfig() {
+        kvConfigManager.load();
         kvConfigManager.putKVConfig(NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, "UnitTest", "test");
         byte[] kvConfig = kvConfigManager.getKVListByNamespace(NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG);
         assertThat(kvConfig).isNotNull();

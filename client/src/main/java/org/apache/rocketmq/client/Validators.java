@@ -17,14 +17,15 @@
 
 package org.apache.rocketmq.client;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.ResponseCode;
-import org.apache.rocketmq.common.topic.TopicValidator;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Common Validator
@@ -33,9 +34,10 @@ public class Validators {
     public static final String VALID_PATTERN_STR = "^[%|a-zA-Z0-9_-]+$";
     public static final Pattern PATTERN = Pattern.compile(VALID_PATTERN_STR);
     public static final int CHARACTER_MAX_LENGTH = 255;
-    public static final int TOPIC_MAX_LENGTH = 127;
 
     /**
+     * @param origin
+     * @param patternStr
      * @return The resulting {@code String}
      */
     public static String getGroupWithRegularExpression(String origin, String patternStr) {
@@ -49,25 +51,27 @@ public class Validators {
 
     /**
      * Validate group
+     *
+     * @param group 分组
+     * @throws MQClientException
      */
     public static void checkGroup(String group) throws MQClientException {
         if (UtilAll.isBlank(group)) {
             throw new MQClientException("the specified group is blank", null);
         }
-
-        if (group.length() > CHARACTER_MAX_LENGTH) {
-            throw new MQClientException("the specified group is longer than group max length 255.", null);
-        }
-
         if (!regularExpressionMatcher(group, PATTERN)) {
             throw new MQClientException(String.format(
                 "the specified group[%s] contains illegal characters, allowing only %s", group,
                 VALID_PATTERN_STR), null);
         }
-
+        if (group.length() > CHARACTER_MAX_LENGTH) {
+            throw new MQClientException("the specified group is longer than group max length 255.", null);
+        }
     }
 
     /**
+     * @param origin
+     * @param pattern
      * @return <tt>true</tt> if, and only if, the entire origin sequence matches this matcher's pattern
      */
     public static boolean regularExpressionMatcher(String origin, Pattern pattern) {
@@ -78,6 +82,13 @@ public class Validators {
         return matcher.matches();
     }
 
+    /**
+     * Validate message
+     *
+     * @param msg 消息
+     * @param defaultMQProducer producer
+     * @throws MQClientException 当 msg 格式不正确
+     */
     public static void checkMessage(Message msg, DefaultMQProducer defaultMQProducer)
         throws MQClientException {
         if (null == msg) {
@@ -85,8 +96,6 @@ public class Validators {
         }
         // topic
         Validators.checkTopic(msg.getTopic());
-        Validators.isNotAllowedSendTopic(msg.getTopic());
-
         // body
         if (null == msg.getBody()) {
             throw new MQClientException(ResponseCode.MESSAGE_ILLEGAL, "the message body is null");
@@ -102,6 +111,12 @@ public class Validators {
         }
     }
 
+    /**
+     * Validate topic
+     *
+     * @param topic
+     * @throws MQClientException
+     */
     public static void checkTopic(String topic) throws MQClientException {
         if (UtilAll.isBlank(topic)) {
             throw new MQClientException("The specified topic is blank", null);
@@ -113,24 +128,14 @@ public class Validators {
                 VALID_PATTERN_STR), null);
         }
 
-        if (topic.length() > TOPIC_MAX_LENGTH) {
+        if (topic.length() > CHARACTER_MAX_LENGTH) {
+            throw new MQClientException("The specified topic is longer than topic max length 255.", null);
+        }
+
+        //whether the same with system reserved keyword
+        if (topic.equals(MixAll.DEFAULT_TOPIC)) {
             throw new MQClientException(
-                String.format("The specified topic is longer than topic max length %d.", TOPIC_MAX_LENGTH), null);
+                String.format("The topic[%s] is conflict with default topic.", topic), null);
         }
     }
-
-    public static void isSystemTopic(String topic) throws MQClientException {
-        if (TopicValidator.isSystemTopic(topic)) {
-            throw new MQClientException(
-                    String.format("The topic[%s] is conflict with system topic.", topic), null);
-        }
-    }
-
-    public static void isNotAllowedSendTopic(String topic) throws MQClientException {
-        if (TopicValidator.isNotAllowedSendTopic(topic)) {
-            throw new MQClientException(
-                    String.format("Sending message to topic[%s] is forbidden.", topic), null);
-        }
-    }
-
 }

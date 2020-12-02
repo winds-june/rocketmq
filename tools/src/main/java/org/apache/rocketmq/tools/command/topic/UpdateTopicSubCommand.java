@@ -19,7 +19,6 @@ package org.apache.rocketmq.tools.command.topic;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.common.sysflag.TopicSysFlag;
@@ -28,7 +27,6 @@ import org.apache.rocketmq.srvutil.ServerUtil;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.CommandUtil;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class UpdateTopicSubCommand implements SubCommand {
 
@@ -44,16 +42,13 @@ public class UpdateTopicSubCommand implements SubCommand {
 
     @Override
     public Options buildCommandlineOptions(Options options) {
-        OptionGroup optionGroup = new OptionGroup();
-
         Option opt = new Option("b", "brokerAddr", true, "create topic to which broker");
-        optionGroup.addOption(opt);
+        opt.setRequired(false);
+        options.addOption(opt);
 
         opt = new Option("c", "clusterName", true, "create topic to which cluster");
-        optionGroup.addOption(opt);
-
-        optionGroup.setRequired(true);
-        options.addOptionGroup(optionGroup);
+        opt.setRequired(false);
+        options.addOption(opt);
 
         opt = new Option("t", "topic", true, "topic name");
         opt.setRequired(true);
@@ -71,15 +66,15 @@ public class UpdateTopicSubCommand implements SubCommand {
         opt.setRequired(false);
         options.addOption(opt);
 
-        opt = new Option("o", "order", true, "set topic's order(true|false)");
+        opt = new Option("o", "order", true, "set topic's order(true|false");
         opt.setRequired(false);
         options.addOption(opt);
 
-        opt = new Option("u", "unit", true, "is unit topic (true|false)");
+        opt = new Option("u", "unit", true, "is unit topic (true|false");
         opt.setRequired(false);
         options.addOption(opt);
 
-        opt = new Option("s", "hasUnitSub", true, "has unit sub (true|false)");
+        opt = new Option("s", "hasUnitSub", true, "has unit sub (true|false");
         opt.setRequired(false);
         options.addOption(opt);
 
@@ -87,8 +82,7 @@ public class UpdateTopicSubCommand implements SubCommand {
     }
 
     @Override
-    public void execute(final CommandLine commandLine, final Options options,
-        RPCHook rpcHook) throws SubCommandException {
+    public void execute(final CommandLine commandLine, final Options options, RPCHook rpcHook) {
         DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook);
         defaultMQAdminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
 
@@ -142,7 +136,7 @@ public class UpdateTopicSubCommand implements SubCommand {
                     String brokerName = CommandUtil.fetchBrokerNameByAddr(defaultMQAdminExt, addr);
                     String orderConf = brokerName + ":" + topicConfig.getWriteQueueNums();
                     defaultMQAdminExt.createOrUpdateOrderConf(topicConfig.getTopicName(), orderConf, false);
-                    System.out.printf("%s", String.format("set broker orderConf. isOrder=%s, orderConf=[%s]",
+                    System.out.printf(String.format("set broker orderConf. isOrder=%s, orderConf=[%s]",
                         isOrder, orderConf.toString()));
                 }
                 System.out.printf("create topic to %s success.%n", addr);
@@ -173,7 +167,8 @@ public class UpdateTopicSubCommand implements SubCommand {
                     }
                     defaultMQAdminExt.createOrUpdateOrderConf(topicConfig.getTopicName(),
                         orderConf.toString(), true);
-                    System.out.printf("set cluster orderConf. isOrder=%s, orderConf=[%s]", isOrder, orderConf);
+                    System.out.printf(String.format("set cluster orderConf. isOrder=%s, orderConf=[%s]",
+                        isOrder, orderConf.toString()));
                 }
 
                 System.out.printf("%s", topicConfig);
@@ -182,7 +177,7 @@ public class UpdateTopicSubCommand implements SubCommand {
 
             ServerUtil.printCommandLineHelp("mqadmin " + this.commandName(), options);
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             defaultMQAdminExt.shutdown();
         }

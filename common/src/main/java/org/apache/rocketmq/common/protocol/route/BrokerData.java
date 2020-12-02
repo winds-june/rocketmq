@@ -15,46 +15,48 @@
  * limitations under the License.
  */
 
+/**
+ * $Id: BrokerData.java 1835 2013-05-16 02:00:50Z vintagewang@apache.org $
+ */
 package org.apache.rocketmq.common.protocol.route;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
 import org.apache.rocketmq.common.MixAll;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Broker数据
+ */
 public class BrokerData implements Comparable<BrokerData> {
+    /**
+     * 集群名
+     */
     private String cluster;
+    /**
+     * Broker名
+     */
     private String brokerName;
+    /**
+     * broker角色编号 和 broker地址 Map
+     */
     private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs;
 
-    private final Random random = new Random();
-
-    public BrokerData() {
-
-    }
-
-    public BrokerData(String cluster, String brokerName, HashMap<Long, String> brokerAddrs) {
-        this.cluster = cluster;
-        this.brokerName = brokerName;
-        this.brokerAddrs = brokerAddrs;
-    }
-
     /**
-     * Selects a (preferably master) broker address from the registered list.
-     * If the master's address cannot be found, a slave broker address is selected in a random manner.
+     * 获取 Broker地址
+     * 优先级： Master > {@link #brokerAddrs}第一个
      *
-     * @return Broker address.
+     * @return Broker地址
      */
     public String selectBrokerAddr() {
-        String addr = this.brokerAddrs.get(MixAll.MASTER_ID);
-
-        if (addr == null) {
-            List<String> addrs = new ArrayList<String>(brokerAddrs.values());
-            return addrs.get(random.nextInt(addrs.size()));
+        String value = this.brokerAddrs.get(MixAll.MASTER_ID);
+        if (null == value) {
+            for (Map.Entry<Long, String> entry : this.brokerAddrs.entrySet()) {
+                return entry.getValue();
+            }
         }
 
-        return addr;
+        return value;
     }
 
     public HashMap<Long, String> getBrokerAddrs() {

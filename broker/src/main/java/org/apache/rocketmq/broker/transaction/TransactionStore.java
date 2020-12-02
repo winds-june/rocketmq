@@ -19,10 +19,6 @@ package org.apache.rocketmq.broker.transaction;
 
 import java.util.List;
 
-/**
- * This class will be removed in ther version 4.4.0, and {@link TransactionalMessageService} class is recommended.
- */
-@Deprecated
 public interface TransactionStore {
     boolean open();
 

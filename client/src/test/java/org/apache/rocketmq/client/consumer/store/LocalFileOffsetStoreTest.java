@@ -19,8 +19,6 @@ package org.apache.rocketmq.client.consumer.store;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
-
 import org.apache.rocketmq.client.ClientConfig;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -71,18 +69,7 @@ public class LocalFileOffsetStoreTest {
         offsetStore.updateOffset(messageQueue, 1024, false);
         assertThat(offsetStore.readOffset(messageQueue, ReadOffsetType.READ_FROM_STORE)).isEqualTo(-1);
 
-        offsetStore.persistAll(new HashSet<MessageQueue>(Collections.singletonList(messageQueue)));
+        offsetStore.persistAll(new HashSet<>(Collections.singletonList(messageQueue)));
         assertThat(offsetStore.readOffset(messageQueue, ReadOffsetType.READ_FROM_STORE)).isEqualTo(1024);
-    }
-
-    @Test
-    public void testCloneOffset() throws Exception {
-        OffsetStore offsetStore = new LocalFileOffsetStore(mQClientFactory, group);
-        MessageQueue messageQueue = new MessageQueue(topic, brokerName, 3);
-        offsetStore.updateOffset(messageQueue, 1024, false);
-        Map<MessageQueue, Long> cloneOffsetTable = offsetStore.cloneOffsetTable(topic);
-
-        assertThat(cloneOffsetTable.size()).isEqualTo(1);
-        assertThat(cloneOffsetTable.get(messageQueue)).isEqualTo(1024);
     }
 }

@@ -16,21 +16,29 @@
  */
 package org.apache.rocketmq.client.impl.consumer;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.common.ServiceThread;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.common.utils.ThreadUtils;
+import org.slf4j.Logger;
 
+import java.util.concurrent.*;
+
+/**
+ * 消费者拉取消息线程服务
+ */
 public class PullMessageService extends ServiceThread {
-    private final InternalLogger log = ClientLogger.getLog();
-    private final LinkedBlockingQueue<PullRequest> pullRequestQueue = new LinkedBlockingQueue<PullRequest>();
+    private final Logger log = ClientLogger.getLog();
+    /**
+     * 拉取消息请求队列
+     */
+    private final LinkedBlockingQueue<PullRequest> pullRequestQueue = new LinkedBlockingQueue<>();
+    /**
+     * MQClient对象
+     */
     private final MQClientInstance mQClientFactory;
+    /**
+     * 定时器。用于延迟提交拉取请求
+     */
     private final ScheduledExecutorService scheduledExecutorService = Executors
         .newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
@@ -43,19 +51,27 @@ public class PullMessageService extends ServiceThread {
         this.mQClientFactory = mQClientFactory;
     }
 
+    /**
+     * 执行延迟拉取消息请求
+     *
+     * @param pullRequest 拉取消息请求
+     * @param timeDelay 延迟时长
+     */
     public void executePullRequestLater(final PullRequest pullRequest, final long timeDelay) {
-        if (!isStopped()) {
-            this.scheduledExecutorService.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    PullMessageService.this.executePullRequestImmediately(pullRequest);
-                }
-            }, timeDelay, TimeUnit.MILLISECONDS);
-        } else {
-            log.warn("PullMessageServiceScheduledThread has shutdown");
-        }
+        this.scheduledExecutorService.schedule(new Runnable() {
+
+            @Override
+            public void run() {
+                PullMessageService.this.executePullRequestImmediately(pullRequest);
+            }
+        }, timeDelay, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 执行立即拉取消息请求
+     *
+     * @param pullRequest 拉取消息请求
+     */
     public void executePullRequestImmediately(final PullRequest pullRequest) {
         try {
             this.pullRequestQueue.put(pullRequest);
@@ -64,18 +80,25 @@ public class PullMessageService extends ServiceThread {
         }
     }
 
+    /**
+     * 执行延迟任务
+     *
+     * @param r 任务
+     * @param timeDelay 延迟时长
+     */
     public void executeTaskLater(final Runnable r, final long timeDelay) {
-        if (!isStopped()) {
-            this.scheduledExecutorService.schedule(r, timeDelay, TimeUnit.MILLISECONDS);
-        } else {
-            log.warn("PullMessageServiceScheduledThread has shutdown");
-        }
+        this.scheduledExecutorService.schedule(r, timeDelay, TimeUnit.MILLISECONDS);
     }
 
     public ScheduledExecutorService getScheduledExecutorService() {
         return scheduledExecutorService;
     }
 
+    /**
+     * 拉取消息
+     *
+     * @param pullRequest 拉取消息请求
+     */
     private void pullMessage(final PullRequest pullRequest) {
         final MQConsumerInner consumer = this.mQClientFactory.selectConsumer(pullRequest.getConsumerGroup());
         if (consumer != null) {
@@ -92,21 +115,18 @@ public class PullMessageService extends ServiceThread {
 
         while (!this.isStopped()) {
             try {
+                //使用BlockingQueue阻塞队列,当提交了消息拉取请求后,马上执行
                 PullRequest pullRequest = this.pullRequestQueue.take();
-                this.pullMessage(pullRequest);
-            } catch (InterruptedException ignored) {
+                if (pullRequest != null) {
+                    this.pullMessage(pullRequest);
+                }
+            } catch (InterruptedException e) {
             } catch (Exception e) {
                 log.error("Pull Message Service Run Method exception", e);
             }
         }
 
         log.info(this.getServiceName() + " service end");
-    }
-
-    @Override
-    public void shutdown(boolean interrupt) {
-        super.shutdown(interrupt);
-        ThreadUtils.shutdownGracefully(this.scheduledExecutorService, 1000, TimeUnit.MILLISECONDS);
     }
 
     @Override

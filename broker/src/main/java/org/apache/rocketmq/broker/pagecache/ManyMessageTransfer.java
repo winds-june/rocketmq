@@ -27,11 +27,7 @@ import org.apache.rocketmq.store.GetMessageResult;
 public class ManyMessageTransfer extends AbstractReferenceCounted implements FileRegion {
     private final ByteBuffer byteBufferHeader;
     private final GetMessageResult getMessageResult;
-
-    /**
-     * Bytes which were transferred already.
-     */
-    private long transferred;
+    private long transfered; // the bytes which was transfered already
 
     public ManyMessageTransfer(ByteBuffer byteBufferHeader, GetMessageResult getMessageResult) {
         this.byteBufferHeader = byteBufferHeader;
@@ -50,7 +46,7 @@ public class ManyMessageTransfer extends AbstractReferenceCounted implements Fil
 
     @Override
     public long transfered() {
-        return transferred;
+        return transfered;
     }
 
     @Override
@@ -61,14 +57,14 @@ public class ManyMessageTransfer extends AbstractReferenceCounted implements Fil
     @Override
     public long transferTo(WritableByteChannel target, long position) throws IOException {
         if (this.byteBufferHeader.hasRemaining()) {
-            transferred += target.write(this.byteBufferHeader);
-            return transferred;
+            transfered += target.write(this.byteBufferHeader);
+            return transfered;
         } else {
             List<ByteBuffer> messageBufferList = this.getMessageResult.getMessageBufferList();
             for (ByteBuffer bb : messageBufferList) {
                 if (bb.hasRemaining()) {
-                    transferred += target.write(bb);
-                    return transferred;
+                    transfered += target.write(bb);
+                    return transfered;
                 }
             }
         }

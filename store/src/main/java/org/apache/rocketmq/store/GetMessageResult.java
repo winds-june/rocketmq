@@ -16,25 +16,33 @@
  */
 package org.apache.rocketmq.store;
 
+import org.apache.rocketmq.store.stats.BrokerStatsManager;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
+/**
+ * 获取消息结果
+ */
 public class GetMessageResult {
 
+    /**
+     * 每一个SelectMappedBufferResult代表着一条消息,按消息顺序排列
+     */
     private final List<SelectMappedBufferResult> messageMapedList =
-        new ArrayList<SelectMappedBufferResult>(100);
+        new ArrayList<>(100);
 
     private final List<ByteBuffer> messageBufferList = new ArrayList<ByteBuffer>(100);
 
     private GetMessageStatus status;
-    private long nextBeginOffset;
-    private long minOffset;
-    private long maxOffset;
+    private long nextBeginOffset;  //下次拉取时从ConsumeQueue的开始单元序号
+    private long minOffset;  // ConsumeQueue里的最大单元序号
+    private long maxOffset;  // ConsumeQueue里的最小单元序号
 
     private int bufferTotalSize = 0;
 
+    //是否建议从Slave读取消息,当Master内存中积压了超过40%容量的未消费消息
     private boolean suggestPullingFromSlave = false;
 
     private int msgCount4Commercial = 0;
@@ -86,7 +94,7 @@ public class GetMessageResult {
         this.messageMapedList.add(mapedBuffer);
         this.messageBufferList.add(mapedBuffer.getByteBuffer());
         this.bufferTotalSize += mapedBuffer.getSize();
-        this.msgCount4Commercial += (int) Math.ceil(
+        this.msgCount4Commercial += (int)Math.ceil(
             mapedBuffer.getSize() / BrokerStatsManager.SIZE_PER_COUNT);
     }
 

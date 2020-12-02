@@ -20,41 +20,31 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.common.ThreadFactoryImpl;
 import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.common.protocol.NamespaceUtil;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.remoting.RPCHook;
+import org.slf4j.Logger;
 
 /**
- * Schedule service for pull consumer.
- * This Consumer will be removed in 2022, and a better implementation {@link
- * DefaultLitePullConsumer} is recommend to use in the scenario of actively pulling messages.
+ * Schedule service for pull consumer
  */
 public class MQPullConsumerScheduleService {
-    private final InternalLogger log = ClientLogger.getLog();
+    private final Logger log = ClientLogger.getLog();
     private final MessageQueueListener messageQueueListener = new MessageQueueListenerImpl();
-    private final ConcurrentMap<MessageQueue, PullTaskImpl> taskTable =
+    private final ConcurrentHashMap<MessageQueue, PullTaskImpl> taskTable =
         new ConcurrentHashMap<MessageQueue, PullTaskImpl>();
     private DefaultMQPullConsumer defaultMQPullConsumer;
     private int pullThreadNums = 20;
-    private ConcurrentMap<String /* topic */, PullTaskCallback> callbackTable =
+    private ConcurrentHashMap<String /* topic */, PullTaskCallback> callbackTable =
         new ConcurrentHashMap<String, PullTaskCallback>();
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     public MQPullConsumerScheduleService(final String consumerGroup) {
         this.defaultMQPullConsumer = new DefaultMQPullConsumer(consumerGroup);
-        this.defaultMQPullConsumer.setMessageModel(MessageModel.CLUSTERING);
-    }
-
-    public MQPullConsumerScheduleService(final String consumerGroup, final RPCHook rpcHook) {
-        this.defaultMQPullConsumer = new DefaultMQPullConsumer(consumerGroup, rpcHook);
         this.defaultMQPullConsumer.setMessageModel(MessageModel.CLUSTERING);
     }
 
@@ -96,7 +86,7 @@ public class MQPullConsumerScheduleService {
     }
 
     public void registerPullTaskCallback(final String topic, final PullTaskCallback callback) {
-        this.callbackTable.put(NamespaceUtil.wrapNamespace(this.defaultMQPullConsumer.getNamespace(), topic), callback);
+        this.callbackTable.put(topic, callback);
         this.defaultMQPullConsumer.registerMessageQueueListener(topic, null);
     }
 
@@ -110,7 +100,7 @@ public class MQPullConsumerScheduleService {
         }
     }
 
-    public ConcurrentMap<String, PullTaskCallback> getCallbackTable() {
+    public ConcurrentHashMap<String, PullTaskCallback> getCallbackTable() {
         return callbackTable;
     }
 
@@ -160,7 +150,7 @@ public class MQPullConsumerScheduleService {
         }
     }
 
-    public class PullTaskImpl implements Runnable {
+    class PullTaskImpl implements Runnable {
         private final MessageQueue messageQueue;
         private volatile boolean cancelled = false;
 

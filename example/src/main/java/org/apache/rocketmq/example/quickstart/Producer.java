@@ -33,7 +33,8 @@ public class Producer {
          */
         DefaultMQProducer producer = new DefaultMQProducer("please_rename_unique_group_name");
 
-        producer.setNamesrvAddr("localhost:9876");
+        producer.setNamesrvAddr("127.0.0.1:9876"); // TODO add by yunai
+//        producer.setSendLatencyFaultEnable(true);
         /*
          * Specify name server addresses.
          * <p/>
@@ -49,26 +50,41 @@ public class Producer {
         /*
          * Launch the instance.
          */
-
         producer.start();
 
-        for (int i = 0; i < 1000; i++) {
+//        Thread.sleep(10000000L);
+
+        String body = "";
+        for (int i = 0; i < 10 * 1024; i++) {
+            body += "" + i;
+        }
+
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
             try {
 
                 /*
                  * Create a message instance, specifying topic, tag and message body.
                  */
-                Message msg = new Message("TopicTest" /* Topic */,
+
+                Message msg = new Message("TopicTest_mis" /* Topic */,
                     "TagA" /* Tag */,
-                    ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
+                    (body).getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
                 );
 
                 /*
                  * Call send message to deliver message to one of brokers.
                  */
                 SendResult sendResult = producer.send(msg);
+//                producer.send(msg);
+//                producer.sendOneway(msg);
+
 
                 System.out.printf("%s%n", sendResult);
+                break;
+//                System.out.println(i);
+//                if (i % 10000 == 0) {
+//                    System.out.println("sendOneway：" + i);
+//                }
             } catch (Exception e) {
                 e.printStackTrace();
                 Thread.sleep(1000);

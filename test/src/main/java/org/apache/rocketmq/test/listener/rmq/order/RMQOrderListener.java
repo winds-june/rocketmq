@@ -64,13 +64,12 @@ public class RMQOrderListener extends AbstractListener implements MessageListene
         return String.format("%s_%s", queueId, brokerIp);
     }
 
-    @Override
     public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
-                                               ConsumeOrderlyContext context) {
+        ConsumeOrderlyContext context) {
         for (MessageExt msg : msgs) {
             if (isDebug) {
-                if (listenerName != null && listenerName != "") {
-                    logger.info(listenerName + ": " + msg);
+                if (listnerName != null && listnerName != "") {
+                    logger.info(listnerName + ": " + msg);
                 } else {
                     logger.info(msg);
                 }

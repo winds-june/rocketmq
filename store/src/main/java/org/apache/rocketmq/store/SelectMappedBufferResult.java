@@ -18,15 +18,27 @@ package org.apache.rocketmq.store;
 
 import java.nio.ByteBuffer;
 
+/**
+ * 获取映射Buffer结果
+ */
 public class SelectMappedBufferResult {
 
-    private final long startOffset;
-
+    /**
+     * 引用mappedByteBuffer数据数组的一段
+     */
     private final ByteBuffer byteBuffer;
-
+    /**
+     * buffer长度
+     */
     private int size;
-
+    /**
+     * 映射文件
+     */
     private MappedFile mappedFile;
+    /**
+     * 映射文件开始读取物理位置
+     */
+    private final long startOffset;
 
     public SelectMappedBufferResult(long startOffset, ByteBuffer byteBuffer, int size, MappedFile mappedFile) {
         this.startOffset = startOffset;
@@ -48,12 +60,16 @@ public class SelectMappedBufferResult {
         this.byteBuffer.limit(this.size);
     }
 
-//    @Override
-//    protected void finalize() {
-//        if (this.mappedFile != null) {
-//            this.release();
-//        }
-//    }
+    public MappedFile getMappedFile() {
+        return mappedFile;
+    }
+
+    //    @Override
+    //    protected void finalize() {
+    //        if (this.mappedFile != null) {
+    //            this.release();
+    //        }
+    //    }
 
     public synchronized void release() {
         if (this.mappedFile != null) {

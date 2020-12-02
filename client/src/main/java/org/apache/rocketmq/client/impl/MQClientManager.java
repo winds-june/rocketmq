@@ -16,21 +16,30 @@
  */
 package org.apache.rocketmq.client.impl;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.rocketmq.client.ClientConfig;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.client.log.ClientLogger;
-import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.remoting.RPCHook;
+import org.slf4j.Logger;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * MQ Client管理器
+ * 维护clientId 与 MQClient对象的关系
+ */
 public class MQClientManager {
-    private final static InternalLogger log = ClientLogger.getLog();
+    private final static Logger log = ClientLogger.getLog();
+    /**
+     * 单例对象
+     */
     private static MQClientManager instance = new MQClientManager();
     private AtomicInteger factoryIndexGenerator = new AtomicInteger();
-    private ConcurrentMap<String/* clientId */, MQClientInstance> factoryTable =
-        new ConcurrentHashMap<String, MQClientInstance>();
+    /**
+     * clientId 与 MQClient对象 映射Map
+     */
+    private ConcurrentHashMap<String/* clientId */, MQClientInstance> factoryTable = new ConcurrentHashMap<>();
 
     private MQClientManager() {
 
@@ -40,17 +49,22 @@ public class MQClientManager {
         return instance;
     }
 
-    public MQClientInstance getOrCreateMQClientInstance(final ClientConfig clientConfig) {
-        return getOrCreateMQClientInstance(clientConfig, null);
+    public MQClientInstance getAndCreateMQClientInstance(final ClientConfig clientConfig) {
+        return getAndCreateMQClientInstance(clientConfig, null);
     }
 
-    public MQClientInstance getOrCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
-        String clientId = clientConfig.buildMQClientId();
+    /**
+     * 获得 MQClient 对象。如果不存在，则进行创建。
+     *
+     * @param clientConfig client配置
+     * @param rpcHook rpcHook
+     * @return MQ Client Instance
+     */
+    public MQClientInstance getAndCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
+        String clientId = clientConfig.buildMQClientId();  //192.168.0.1@10072 ,代表了当前客户端的唯一编号
         MQClientInstance instance = this.factoryTable.get(clientId);
         if (null == instance) {
-            instance =
-                new MQClientInstance(clientConfig.cloneClientConfig(),
-                    this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);
+            instance = new MQClientInstance(clientConfig.cloneClientConfig(), this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);
             MQClientInstance prev = this.factoryTable.putIfAbsent(clientId, instance);
             if (prev != null) {
                 instance = prev;

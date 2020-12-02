@@ -26,7 +26,6 @@ import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class SendMsgStatusCommand implements SubCommand {
 
@@ -70,7 +69,7 @@ public class SendMsgStatusCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         final DefaultMQProducer producer = new DefaultMQProducer("PID_SMSC", rpcHook);
         producer.setInstanceName("PID_SMSC_" + System.currentTimeMillis());
 
@@ -85,10 +84,10 @@ public class SendMsgStatusCommand implements SubCommand {
             for (int i = 0; i < count; i++) {
                 long begin = System.currentTimeMillis();
                 SendResult result = producer.send(buildMessage(brokerName, messageSize));
-                System.out.printf("rt:" + (System.currentTimeMillis() - begin) + "ms, SendResult=%s", result);
+                System.out.printf("rt:" + (System.currentTimeMillis() - begin) + "ms, SendResult=" + result);
             }
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             producer.shutdown();
         }

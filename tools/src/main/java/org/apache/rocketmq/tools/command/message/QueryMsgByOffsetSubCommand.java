@@ -26,7 +26,6 @@ import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class QueryMsgByOffsetSubCommand implements SubCommand {
 
@@ -62,7 +61,7 @@ public class QueryMsgByOffsetSubCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook);
         DefaultMQPullConsumer defaultMQPullConsumer = new DefaultMQPullConsumer(MixAll.TOOLS_CONSUMER_GROUP, rpcHook);
 
@@ -97,7 +96,7 @@ public class QueryMsgByOffsetSubCommand implements SubCommand {
                 }
             }
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             defaultMQPullConsumer.shutdown();
             defaultMQAdminExt.shutdown();

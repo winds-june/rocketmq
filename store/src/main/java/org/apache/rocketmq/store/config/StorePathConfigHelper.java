@@ -24,10 +24,6 @@ public class StorePathConfigHelper {
         return rootDir + File.separator + "consumequeue";
     }
 
-    public static String getStorePathConsumeQueueExt(final String rootDir) {
-        return rootDir + File.separator + "consumequeue_ext";
-    }
-
     public static String getStorePathIndex(final String rootDir) {
         return rootDir + File.separator + "index";
     }
@@ -38,10 +34,6 @@ public class StorePathConfigHelper {
 
     public static String getAbortFile(final String rootDir) {
         return rootDir + File.separator + "abort";
-    }
-
-    public static String getLockFile(final String rootDir) {
-        return rootDir + File.separator + "lock";
     }
 
     public static String getDelayOffsetStorePath(final String rootDir) {

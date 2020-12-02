@@ -33,7 +33,7 @@ public class MixAllTest {
         List<String> localInetAddress = MixAll.getLocalInetAddress();
         String local = InetAddress.getLocalHost().getHostAddress();
         assertThat(localInetAddress).contains("127.0.0.1");
-        assertThat(local).isNotNull();
+        assertThat(localInetAddress).contains(local);
     }
 
     @Test
@@ -59,27 +59,11 @@ public class MixAllTest {
             file.delete();
         }
         file.createNewFile();
-        PrintWriter out = new PrintWriter(fileName);
-        out.write("TestForMixAll");
-        out.close();
+        try (PrintWriter out = new PrintWriter(fileName)) {
+            out.write("TestForMixAll");
+        }
         String string = MixAll.file2String(fileName);
         assertThat(string).isEqualTo("TestForMixAll");
-        file.delete();
-    }
-
-    @Test
-    public void testFile2String_WithChinese() throws IOException {
-        String fileName = System.getProperty("java.io.tmpdir") + File.separator + "MixAllTest" + System.currentTimeMillis();
-        File file = new File(fileName);
-        if (file.exists()) {
-            file.delete();
-        }
-        file.createNewFile();
-        PrintWriter out = new PrintWriter(fileName);
-        out.write("TestForMixAll_中文");
-        out.close();
-        String string = MixAll.file2String(fileName);
-        assertThat(string).isEqualTo("TestForMixAll_中文");
         file.delete();
     }
 
@@ -88,11 +72,5 @@ public class MixAllTest {
         String fileName = System.getProperty("java.io.tmpdir") + File.separator + "MixAllTest" + System.currentTimeMillis();
         MixAll.string2File("MixAll_testString2File", fileName);
         assertThat(MixAll.file2String(fileName)).isEqualTo("MixAll_testString2File");
-    }
-
-    @Test
-    public void testGetLocalhostByNetworkInterface() throws Exception {
-        assertThat(MixAll.LOCALHOST).isNotNull();
-        assertThat(MixAll.getLocalhostByNetworkInterface()).isNotNull();
     }
 }

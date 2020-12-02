@@ -16,16 +16,14 @@
  */
 package org.apache.rocketmq.remoting.common;
 
-
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for background thread
  */
 public abstract class ServiceThread implements Runnable {
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
-
+    private static final Logger STLOG = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
     private static final long JOIN_TIME = 90 * 1000;
     protected final Thread thread;
     protected volatile boolean hasNotified = false;
@@ -47,7 +45,7 @@ public abstract class ServiceThread implements Runnable {
 
     public void shutdown(final boolean interrupt) {
         this.stopped = true;
-        log.info("shutdown thread " + this.getServiceName() + " interrupt " + interrupt);
+        STLOG.info("shutdown thread " + this.getServiceName() + " interrupt " + interrupt);
         synchronized (this) {
             if (!this.hasNotified) {
                 this.hasNotified = true;
@@ -62,16 +60,71 @@ public abstract class ServiceThread implements Runnable {
 
             long beginTime = System.currentTimeMillis();
             this.thread.join(this.getJointime());
-            long elapsedTime = System.currentTimeMillis() - beginTime;
-            log.info("join thread " + this.getServiceName() + " elapsed time(ms) " + elapsedTime + " "
+            long eclipseTime = System.currentTimeMillis() - beginTime;
+            STLOG.info("join thread " + this.getServiceName() + " eclipse time(ms) " + eclipseTime + " "
                 + this.getJointime());
         } catch (InterruptedException e) {
-            log.error("Interrupted", e);
+            e.printStackTrace();
         }
     }
 
     public long getJointime() {
         return JOIN_TIME;
+    }
+
+    public void stop() {
+        this.stop(false);
+    }
+
+    public void stop(final boolean interrupt) {
+        this.stopped = true;
+        STLOG.info("stop thread " + this.getServiceName() + " interrupt " + interrupt);
+        synchronized (this) {
+            if (!this.hasNotified) {
+                this.hasNotified = true;
+                this.notify();
+            }
+        }
+
+        if (interrupt) {
+            this.thread.interrupt();
+        }
+    }
+
+    public void makeStop() {
+        this.stopped = true;
+        STLOG.info("makestop thread " + this.getServiceName());
+    }
+
+    public void wakeup() {
+        synchronized (this) {
+            if (!this.hasNotified) {
+                this.hasNotified = true;
+                this.notify();
+            }
+        }
+    }
+
+    protected void waitForRunning(long interval) {
+        synchronized (this) {
+            if (this.hasNotified) {
+                this.hasNotified = false;
+                this.onWaitEnd();
+                return;
+            }
+
+            try {
+                this.wait(interval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                this.hasNotified = false;
+                this.onWaitEnd();
+            }
+        }
+    }
+
+    protected void onWaitEnd() {
     }
 
     public boolean isStopped() {

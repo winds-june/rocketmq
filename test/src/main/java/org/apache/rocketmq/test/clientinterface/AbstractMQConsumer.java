@@ -20,7 +20,7 @@ package org.apache.rocketmq.test.clientinterface;
 import org.apache.rocketmq.test.listener.AbstractListener;
 
 public abstract class AbstractMQConsumer implements MQConsumer {
-    protected AbstractListener listener = null;
+    protected AbstractListener listner = null;
     protected String nsAddr = null;
     protected String topic = null;
     protected String subExpression = null;
@@ -31,11 +31,11 @@ public abstract class AbstractMQConsumer implements MQConsumer {
     }
 
     public AbstractMQConsumer(String nsAddr, String topic, String subExpression,
-        String consumerGroup, AbstractListener listener) {
+        String consumerGroup, AbstractListener listner) {
         this.topic = topic;
         this.subExpression = subExpression;
         this.consumerGroup = consumerGroup;
-        this.listener = listener;
+        this.listner = listner;
         this.nsAddr = nsAddr;
     }
 
@@ -45,16 +45,16 @@ public abstract class AbstractMQConsumer implements MQConsumer {
     }
 
     public void setDebug() {
-        if (listener != null) {
-            listener.setDebug(true);
+        if (listner != null) {
+            listner.setDebug(true);
         }
 
         isDebug = true;
     }
 
     public void setDebug(boolean isDebug) {
-        if (listener != null) {
-            listener.setDebug(isDebug);
+        if (listner != null) {
+            listner.setDebug(isDebug);
         }
 
         this.isDebug = isDebug;
@@ -65,12 +65,12 @@ public abstract class AbstractMQConsumer implements MQConsumer {
         this.subExpression = subExpression;
     }
 
-    public AbstractListener getListener() {
-        return listener;
+    public AbstractListener getListner() {
+        return listner;
     }
 
-    public void setListener(AbstractListener listner) {
-        this.listener = listner;
+    public void setListner(AbstractListener listner) {
+        this.listner = listner;
     }
 
     public String getNsAddr() {
@@ -106,7 +106,7 @@ public abstract class AbstractMQConsumer implements MQConsumer {
     }
 
     public void clearMsg() {
-        listener.clearMsg();
+        listner.clearMsg();
     }
 
 }

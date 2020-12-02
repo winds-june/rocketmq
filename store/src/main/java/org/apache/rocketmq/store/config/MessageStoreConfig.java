@@ -16,49 +16,61 @@
  */
 package org.apache.rocketmq.store.config;
 
-import java.io.File;
 import org.apache.rocketmq.common.annotation.ImportantField;
 import org.apache.rocketmq.store.ConsumeQueue;
+
+import java.io.File;
 
 public class MessageStoreConfig {
     //The root directory in which the log data is kept
     @ImportantField
     private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
 
-    //The directory in which the commitlog is kept
+    /**
+     * The directory in which the commit_log is kept
+     * commitlog 目录
+     */
     @ImportantField
+    @SuppressWarnings("SpellCheckingInspection")
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
         + File.separator + "commitlog";
 
-    // CommitLog file size,default is 1G
-    private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
-    // ConsumeQueue file size,default is 30W
-    private int mappedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQ_STORE_UNIT_SIZE;
-    // enable consume queue ext
-    private boolean enableConsumeQueueExt = false;
-    // ConsumeQueue extend file size, 48M
-    private int mappedFileSizeConsumeQueueExt = 48 * 1024 * 1024;
-    // Bit count of filter bit map.
-    // this will be set by pipe of calculate filter bit map.
-    private int bitMapLengthConsumeQueueExt = 64;
+    /**
+     * CommitLog file size,default is 1G
+     * 每个commitLog文件大小
+     */
+    @SuppressWarnings("SpellCheckingInspection")
+    private int mapedFileSizeCommitLog = 1024 * 1024 * 1024;
+    /**
+     * ConsumeQueue file size,default is 30W
+     * 每个消费队列文件大小，每个文件30W消息
+     */
+    @SuppressWarnings("SpellCheckingInspection")
+    private int mapedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQ_STORE_UNIT_SIZE;
 
-    // CommitLog flush interval
-    // flush data to disk
+    /**
+     * CommitLog flush interval
+     * flush data to disk
+     * flush commitLog 周期，单位：毫秒
+     */
     @ImportantField
     private int flushIntervalCommitLog = 500;
 
-    // Only used if TransientStorePool enabled
-    // flush data to FileChannel
+    /**
+     * Only used if TransientStorePool enabled
+     * flush data to FileChannel
+     * commit CommitLog 周期，单位：毫秒
+     */
     @ImportantField
     private int commitIntervalCommitLog = 200;
 
-    /**
-     * introduced since 4.0.x. Determine whether to use mutex reentrantLock when putting message.<br/>
-     * By default it is set to false indicating using spin lock when putting message.
-     */
+    @SuppressWarnings("SpellCheckingInspection")
     private boolean useReentrantLockWhenPutMessage = false;
 
-    // Whether schedule flush,default is real-time
+    /**
+     * Whether schedule flush,default is real-time
+     * flush commitLog 是否是定时的
+     */
     @ImportantField
     private boolean flushCommitLogTimed = false;
     // ConsumeQueue flush interval
@@ -80,21 +92,33 @@ public class MessageStoreConfig {
     private int fileReservedTime = 72;
     // Flow control for ConsumeQueue
     private int putMsgIndexHightWater = 600000;
-    // The maximum size of message,default is 4M
+    // The maximum size of a single log file,default is 512K
     private int maxMessageSize = 1024 * 1024 * 4;
     // Whether check the CRC32 of the records consumed.
     // This ensures no on-the-wire or on-disk corruption to the messages occurred.
     // This check adds some overhead,so it may be disabled in cases seeking extreme performance.
     private boolean checkCRCOnRecover = true;
-    // How many pages are to be flushed when flush CommitLog
+    /**
+     * How many pages are to be flushed when flush CommitLog
+     * flush commitLog 最小分页
+     */
     private int flushCommitLogLeastPages = 4;
-    // How many pages are to be committed when commit data to file
+    /**
+     * How many pages are to be committed when commit data to file
+     * commit commitLog 最小分页
+     */
     private int commitCommitLogLeastPages = 4;
     // Flush page size when the disk in warming state
     private int flushLeastPagesWhenWarmMapedFile = 1024 / 4 * 16;
     // How many pages are to be flushed when flush ConsumeQueue
     private int flushConsumeQueueLeastPages = 2;
+    /**
+     * flush commitLog 大周期
+     */
     private int flushCommitLogThoroughInterval = 1000 * 10;
+    /**
+     * commit commitLog 大周期
+     */
     private int commitCommitLogThoroughInterval = 200;
     private int flushConsumeQueueThoroughInterval = 1000 * 60;
     @ImportantField
@@ -106,7 +130,7 @@ public class MessageStoreConfig {
     @ImportantField
     private int maxTransferCountOnMessageInDisk = 8;
     @ImportantField
-    private int accessMessageInMemoryMaxRatio = 40;
+    private int accessMessageInMemoryMaxRatio = 40;  //从内存中获取消息的最大比例,计算时会 40/100
     @ImportantField
     private boolean messageIndexEnable = true;
     private int maxHashSlotNum = 5000000;
@@ -126,11 +150,18 @@ public class MessageStoreConfig {
     @ImportantField
     private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     private int syncFlushTimeout = 1000 * 5;
+    /**
+     * 消息延迟级别字符串配置
+     */
     private String messageDelayLevel = "1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h";
     private long flushDelayOffsetInterval = 1000 * 10;
     @ImportantField
     private boolean cleanFileForciblyEnable = true;
     private boolean warmMapedFileEnable = false;
+    /**
+     * slave节点是否检查消费offset
+     * 在拉取消息时，由于各种情况，拉取请求的offset可能不正确，是否修复生成新的拉取offset给client端。
+     */
     private boolean offsetCheckInSlave = false;
     private boolean debugLockEnable = false;
     private boolean duplicationEnable = false;
@@ -142,11 +173,6 @@ public class MessageStoreConfig {
     private boolean transientStorePoolEnable = false;
     private int transientStorePoolSize = 5;
     private boolean fastFailIfNoBufferInStorePool = false;
-
-    private boolean enableDLegerCommitLog = false;
-    private String dLegerGroup;
-    private String dLegerPeers;
-    private String dLegerSelfId;
 
     public boolean isDebugLockEnable() {
         return debugLockEnable;
@@ -188,46 +214,22 @@ public class MessageStoreConfig {
         this.warmMapedFileEnable = warmMapedFileEnable;
     }
 
-    public int getMappedFileSizeCommitLog() {
-        return mappedFileSizeCommitLog;
+    public int getMapedFileSizeCommitLog() {
+        return mapedFileSizeCommitLog;
     }
 
-    public void setMappedFileSizeCommitLog(int mappedFileSizeCommitLog) {
-        this.mappedFileSizeCommitLog = mappedFileSizeCommitLog;
+    public void setMapedFileSizeCommitLog(int mapedFileSizeCommitLog) {
+        this.mapedFileSizeCommitLog = mapedFileSizeCommitLog;
     }
 
-    public int getMappedFileSizeConsumeQueue() {
+    public int getMapedFileSizeConsumeQueue() {
 
-        int factor = (int) Math.ceil(this.mappedFileSizeConsumeQueue / (ConsumeQueue.CQ_STORE_UNIT_SIZE * 1.0));
+        int factor = (int) Math.ceil(this.mapedFileSizeConsumeQueue / (ConsumeQueue.CQ_STORE_UNIT_SIZE * 1.0));
         return (int) (factor * ConsumeQueue.CQ_STORE_UNIT_SIZE);
     }
 
-    public void setMappedFileSizeConsumeQueue(int mappedFileSizeConsumeQueue) {
-        this.mappedFileSizeConsumeQueue = mappedFileSizeConsumeQueue;
-    }
-
-    public boolean isEnableConsumeQueueExt() {
-        return enableConsumeQueueExt;
-    }
-
-    public void setEnableConsumeQueueExt(boolean enableConsumeQueueExt) {
-        this.enableConsumeQueueExt = enableConsumeQueueExt;
-    }
-
-    public int getMappedFileSizeConsumeQueueExt() {
-        return mappedFileSizeConsumeQueueExt;
-    }
-
-    public void setMappedFileSizeConsumeQueueExt(int mappedFileSizeConsumeQueueExt) {
-        this.mappedFileSizeConsumeQueueExt = mappedFileSizeConsumeQueueExt;
-    }
-
-    public int getBitMapLengthConsumeQueueExt() {
-        return bitMapLengthConsumeQueueExt;
-    }
-
-    public void setBitMapLengthConsumeQueueExt(int bitMapLengthConsumeQueueExt) {
-        this.bitMapLengthConsumeQueueExt = bitMapLengthConsumeQueueExt;
+    public void setMapedFileSizeConsumeQueue(int mapedFileSizeConsumeQueue) {
+        this.mapedFileSizeConsumeQueue = mapedFileSizeConsumeQueue;
     }
 
     public int getFlushIntervalCommitLog() {
@@ -609,8 +611,7 @@ public class MessageStoreConfig {
     }
 
     /**
-     * Enable transient commitLog store pool only if transientStorePoolEnable is true and the FlushDiskType is
-     * ASYNC_FLUSH
+     * Enable transient commitLog store poll only if transientStorePoolEnable is true and the FlushDiskType is ASYNC_FLUSH
      *
      * @return <tt>true</tt> or <tt>false</tt>
      */
@@ -669,37 +670,5 @@ public class MessageStoreConfig {
 
     public void setCommitCommitLogThoroughInterval(final int commitCommitLogThoroughInterval) {
         this.commitCommitLogThoroughInterval = commitCommitLogThoroughInterval;
-    }
-
-    public String getdLegerGroup() {
-        return dLegerGroup;
-    }
-
-    public void setdLegerGroup(String dLegerGroup) {
-        this.dLegerGroup = dLegerGroup;
-    }
-
-    public String getdLegerPeers() {
-        return dLegerPeers;
-    }
-
-    public void setdLegerPeers(String dLegerPeers) {
-        this.dLegerPeers = dLegerPeers;
-    }
-
-    public String getdLegerSelfId() {
-        return dLegerSelfId;
-    }
-
-    public void setdLegerSelfId(String dLegerSelfId) {
-        this.dLegerSelfId = dLegerSelfId;
-    }
-
-    public boolean isEnableDLegerCommitLog() {
-        return enableDLegerCommitLog;
-    }
-
-    public void setEnableDLegerCommitLog(boolean enableDLegerCommitLog) {
-        this.enableDLegerCommitLog = enableDLegerCommitLog;
     }
 }

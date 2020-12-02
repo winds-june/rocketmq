@@ -20,7 +20,7 @@ package org.apache.rocketmq.test.util;
 import java.util.concurrent.TimeUnit;
 
 public class TestUtils {
-    public static void waitForMoment(long time) {
+    public static void waitForMonment(long time) {
         try {
             Thread.sleep(time);
         } catch (InterruptedException var3) {

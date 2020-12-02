@@ -19,6 +19,7 @@ package org.apache.rocketmq.broker;
 
 import java.io.File;
 
+
 public class BrokerPathConfigHelper {
     private static String brokerConfigPath = System.getProperty("user.home") + File.separator + "store"
         + File.separator + "config" + File.separator + "broker.properties";
@@ -43,7 +44,4 @@ public class BrokerPathConfigHelper {
         return rootDir + File.separator + "config" + File.separator + "subscriptionGroup.json";
     }
 
-    public static String getConsumerFilterPath(final String rootDir) {
-        return rootDir + File.separator + "config" + File.separator + "consumerFilter.json";
-    }
 }

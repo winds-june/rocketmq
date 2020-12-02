@@ -20,21 +20,41 @@ package org.apache.rocketmq.store;
  * When write a message to the commit log, returns results
  */
 public class AppendMessageResult {
-    // Return code
+    /**
+     * Return code
+     */
     private AppendMessageStatus status;
-    // Where to start writing
+    /**
+     * Where to start writing
+     * PHY OFFSET
+     */
     private long wroteOffset;
-    // Write Bytes
+    /**
+     * Write Bytes
+     * 消息长度
+     */
     private int wroteBytes;
-    // Message ID
+    /**
+     * Message ID
+     * ip+port+commitlog offset
+     */
     private String msgId;
-    // Message storage timestamp
+    /**
+     * Message storage timestamp
+     * 存储时间
+     */
     private long storeTimestamp;
-    // Consume queue's offset(step by one)
+    /**
+     * Consume queue's offset(step by one)
+     * 队列编号
+     */
+    @SuppressWarnings("SpellCheckingInspection")
     private long logicsOffset;
+    /**
+     * 写入buffer花费时间
+     */
+    @SuppressWarnings("SpellCheckingInspection")
     private long pagecacheRT = 0;
-
-    private int msgNum = 1;
 
     public AppendMessageResult(AppendMessageStatus status) {
         this(status, 0, 0, "", 0, 0, 0);
@@ -111,14 +131,6 @@ public class AppendMessageResult {
         this.logicsOffset = logicsOffset;
     }
 
-    public int getMsgNum() {
-        return msgNum;
-    }
-
-    public void setMsgNum(int msgNum) {
-        this.msgNum = msgNum;
-    }
-
     @Override
     public String toString() {
         return "AppendMessageResult{" +
@@ -129,7 +141,6 @@ public class AppendMessageResult {
             ", storeTimestamp=" + storeTimestamp +
             ", logicsOffset=" + logicsOffset +
             ", pagecacheRT=" + pagecacheRT +
-            ", msgNum=" + msgNum +
             '}';
     }
 }

@@ -16,107 +16,93 @@
  */
 package org.apache.rocketmq.client.log;
 
+import java.lang.reflect.Method;
+import java.net.URL;
 import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InnerLoggerFactory;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
-import org.apache.rocketmq.logging.inner.Appender;
-import org.apache.rocketmq.logging.inner.Layout;
-import org.apache.rocketmq.logging.inner.Level;
-import org.apache.rocketmq.logging.inner.Logger;
-import org.apache.rocketmq.logging.inner.LoggingBuilder;
-import org.apache.rocketmq.logging.inner.LoggingEvent;
-import org.apache.rocketmq.remoting.common.RemotingHelper;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ClientLogger {
-
-    public static final String CLIENT_LOG_USESLF4J = "rocketmq.client.logUseSlf4j";
     public static final String CLIENT_LOG_ROOT = "rocketmq.client.logRoot";
     public static final String CLIENT_LOG_MAXINDEX = "rocketmq.client.logFileMaxIndex";
-    public static final String CLIENT_LOG_FILESIZE = "rocketmq.client.logFileMaxSize";
     public static final String CLIENT_LOG_LEVEL = "rocketmq.client.logLevel";
-    public static final String CLIENT_LOG_ADDITIVE = "rocketmq.client.log.additive";
-    public static final String CLIENT_LOG_FILENAME = "rocketmq.client.logFileName";
-    public static final String CLIENT_LOG_ASYNC_QUEUESIZE = "rocketmq.client.logAsyncQueueSize";
-    public static final String ROCKETMQ_CLIENT_APPENDER_NAME = "RocketmqClientAppender";
-
-    private static final InternalLogger CLIENT_LOGGER;
-
-    private static final boolean CLIENT_USE_SLF4J;
-
-    //private static Appender rocketmqClientAppender = null;
+    private static Logger log;
 
     static {
-        CLIENT_USE_SLF4J = Boolean.parseBoolean(System.getProperty(CLIENT_LOG_USESLF4J, "false"));
-        if (!CLIENT_USE_SLF4J) {
-            InternalLoggerFactory.setCurrentLoggerType(InnerLoggerFactory.LOGGER_INNER);
-            CLIENT_LOGGER = createLogger(LoggerName.CLIENT_LOGGER_NAME);
-            createLogger(LoggerName.COMMON_LOGGER_NAME);
-            createLogger(RemotingHelper.ROCKETMQ_REMOTING);
-        } else {
-            CLIENT_LOGGER = InternalLoggerFactory.getLogger(LoggerName.CLIENT_LOGGER_NAME);
-        }
+        log = createLogger(LoggerName.CLIENT_LOGGER_NAME);
     }
 
-    private static synchronized Appender createClientAppender() {
-        String clientLogRoot = System.getProperty(CLIENT_LOG_ROOT, System.getProperty("user.home") + "/logs/rocketmqlogs");
-        String clientLogMaxIndex = System.getProperty(CLIENT_LOG_MAXINDEX, "10");
-        String clientLogFileName = System.getProperty(CLIENT_LOG_FILENAME, "rocketmq_client.log");
-        String maxFileSize = System.getProperty(CLIENT_LOG_FILESIZE, "1073741824");
-        String asyncQueueSize = System.getProperty(CLIENT_LOG_ASYNC_QUEUESIZE, "1024");
+    private static Logger createLogger(final String loggerName) {
+        String logConfigFilePath =
+            System.getProperty("rocketmq.client.log.configFile",
+                System.getenv("ROCKETMQ_CLIENT_LOG_CONFIGFILE"));
+        Boolean isloadconfig =
+            Boolean.parseBoolean(System.getProperty("rocketmq.client.log.loadconfig", "true"));
 
-        String logFileName = clientLogRoot + "/" + clientLogFileName;
+        final String log4JResourceFile =
+            System.getProperty("rocketmq.client.log4j.resource.fileName", "log4j_rocketmq_client.xml");
 
-        int maxFileIndex = Integer.parseInt(clientLogMaxIndex);
-        int queueSize = Integer.parseInt(asyncQueueSize);
+        final String logbackResourceFile =
+            System.getProperty("rocketmq.client.logback.resource.fileName", "logback_rocketmq_client.xml");
 
-        Layout layout = LoggingBuilder.newLayoutBuilder().withDefaultLayout().build();
-
-        Appender rocketmqClientAppender = LoggingBuilder.newAppenderBuilder()
-            .withRollingFileAppender(logFileName, maxFileSize, maxFileIndex)
-            .withAsync(false, queueSize).withName(ROCKETMQ_CLIENT_APPENDER_NAME).withLayout(layout).build();
-
-        Logger.getRootLogger().addAppender(rocketmqClientAppender);
-        return rocketmqClientAppender;
-    }
-
-    private static InternalLogger createLogger(final String loggerName) {
+        String clientLogRoot = System.getProperty(CLIENT_LOG_ROOT, "${user.home}/logs/rocketmqlogs");
+        System.setProperty("client.logRoot", clientLogRoot);
         String clientLogLevel = System.getProperty(CLIENT_LOG_LEVEL, "INFO");
-        boolean additive = "true".equalsIgnoreCase(System.getProperty(CLIENT_LOG_ADDITIVE));
-        InternalLogger logger = InternalLoggerFactory.getLogger(loggerName);
-        InnerLoggerFactory.InnerLogger innerLogger = (InnerLoggerFactory.InnerLogger) logger;
-        Logger realLogger = innerLogger.getLogger();
+        System.setProperty("client.logLevel", clientLogLevel);
+        String clientLogMaxIndex = System.getProperty(CLIENT_LOG_MAXINDEX, "10");
+        System.setProperty("client.logFileMaxIndex", clientLogMaxIndex);
 
-        //if (rocketmqClientAppender == null) {
-        //   createClientAppender();
-        //}
+        if (isloadconfig) {
+            try {
+                ILoggerFactory iLoggerFactory = LoggerFactory.getILoggerFactory();
+                Class classType = iLoggerFactory.getClass();
+                if (classType.getName().equals("org.slf4j.impl.Log4jLoggerFactory")) {
+                    Class<?> domconfigurator;
+                    Object domconfiguratorobj;
+                    domconfigurator = Class.forName("org.apache.log4j.xml.DOMConfigurator");
+                    domconfiguratorobj = domconfigurator.newInstance();
+                    if (null == logConfigFilePath) {
+                        Method configure = domconfiguratorobj.getClass().getMethod("configure", URL.class);
+                        URL url = ClientLogger.class.getClassLoader().getResource(log4JResourceFile);
+                        configure.invoke(domconfiguratorobj, url);
+                    } else {
+                        Method configure = domconfiguratorobj.getClass().getMethod("configure", String.class);
+                        configure.invoke(domconfiguratorobj, logConfigFilePath);
+                    }
 
-        realLogger.addAppender(new AppenderProxy());
-        realLogger.setLevel(Level.toLevel(clientLogLevel));
-        realLogger.setAdditivity(additive);
-        return logger;
+                } else if (classType.getName().equals("ch.qos.logback.classic.LoggerContext")) {
+                    Class<?> joranConfigurator;
+                    Class<?> context = Class.forName("ch.qos.logback.core.Context");
+                    Object joranConfiguratoroObj;
+                    joranConfigurator = Class.forName("ch.qos.logback.classic.joran.JoranConfigurator");
+                    joranConfiguratoroObj = joranConfigurator.newInstance();
+                    Method setContext = joranConfiguratoroObj.getClass().getMethod("setContext", context);
+                    setContext.invoke(joranConfiguratoroObj, iLoggerFactory);
+                    if (null == logConfigFilePath) {
+                        URL url = ClientLogger.class.getClassLoader().getResource(logbackResourceFile);
+                        Method doConfigure =
+                            joranConfiguratoroObj.getClass().getMethod("doConfigure", URL.class);
+                        doConfigure.invoke(joranConfiguratoroObj, url);
+                    } else {
+                        Method doConfigure =
+                            joranConfiguratoroObj.getClass().getMethod("doConfigure", String.class);
+                        doConfigure.invoke(joranConfiguratoroObj, logConfigFilePath);
+                    }
+
+                }
+            } catch (Exception e) {
+                System.err.println(e);
+            }
+        }
+        return LoggerFactory.getLogger(LoggerName.CLIENT_LOGGER_NAME);
     }
 
-    public static InternalLogger getLog() {
-        return CLIENT_LOGGER;
+    public static Logger getLog() {
+        return log;
     }
 
-    static class AppenderProxy extends Appender {
-        private Appender proxy;
-
-        @Override
-        protected void append(LoggingEvent event) {
-            if (null == proxy) {
-                proxy = ClientLogger.createClientAppender();
-            }
-            proxy.doAppend(event);
-        }
-
-        @Override
-        public void close() {
-            if (null != proxy) {
-                proxy.close();
-            }
-        }
+    public static void setLog(Logger log) {
+        ClientLogger.log = log;
     }
 }

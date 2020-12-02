@@ -28,14 +28,14 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RemotingCommand {
     public static final String SERIALIZE_TYPE_PROPERTY = "rocketmq.serialize.type";
     public static final String SERIALIZE_TYPE_ENV = "ROCKETMQ_SERIALIZE_TYPE";
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
+    private static final Logger log = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
     private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND
     private static final int RPC_ONEWAY = 1; // 0, RPC
     private static final Map<Class<? extends CommandCustomHeader>, Field[]> CLASS_HASH_MAP =
@@ -43,7 +43,7 @@ public class RemotingCommand {
     private static final Map<Class, String> CANONICAL_NAME_CACHE = new HashMap<Class, String>();
     // 1, Oneway
     // 1, RESPONSE_COMMAND
-    private static final Map<Field, Boolean> NULLABLE_FIELD_CACHE = new HashMap<Field, Boolean>();
+    private static final Map<Field, Annotation> NOT_NULL_ANNOTATION_CACHE = new HashMap<Field, Annotation>();
     private static final String STRING_CANONICAL_NAME = String.class.getCanonicalName();
     private static final String DOUBLE_CANONICAL_NAME_1 = Double.class.getCanonicalName();
     private static final String DOUBLE_CANONICAL_NAME_2 = double.class.getCanonicalName();
@@ -110,8 +110,7 @@ public class RemotingCommand {
         return createResponseCommand(RemotingSysResponseCode.SYSTEM_ERROR, "not set any response code", classHeader);
     }
 
-    public static RemotingCommand createResponseCommand(int code, String remark,
-        Class<? extends CommandCustomHeader> classHeader) {
+    public static RemotingCommand createResponseCommand(int code, String remark, Class<? extends CommandCustomHeader> classHeader) {
         RemotingCommand cmd = new RemotingCommand();
         cmd.markResponseType();
         cmd.setCode(code);
@@ -188,7 +187,7 @@ public class RemotingCommand {
     }
 
     public static int createNewRequestId() {
-        return requestId.getAndIncrement();
+        return requestId.incrementAndGet();
     }
 
     public static SerializeType getSerializeTypeConfigInThisServer() {
@@ -231,8 +230,7 @@ public class RemotingCommand {
         this.customHeader = customHeader;
     }
 
-    public CommandCustomHeader decodeCommandCustomHeader(
-        Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
+    public CommandCustomHeader decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
         CommandCustomHeader objectHeader;
         try {
             objectHeader = classHeader.newInstance();
@@ -252,9 +250,11 @@ public class RemotingCommand {
                         try {
                             String value = this.extFields.get(fieldName);
                             if (null == value) {
-                                if (!isFieldNullable(field)) {
+                                Annotation annotation = getNotNullAnnotation(field);
+                                if (annotation != null) {
                                     throw new RemotingCommandException("the custom field <" + fieldName + "> is null");
                                 }
+
                                 continue;
                             }
 
@@ -279,7 +279,6 @@ public class RemotingCommand {
                             field.set(objectHeader, valueParsed);
 
                         } catch (Throwable e) {
-                            log.error("Failed field [{}] decoding", fieldName, e);
                         }
                     }
                 }
@@ -303,14 +302,16 @@ public class RemotingCommand {
         return field;
     }
 
-    private boolean isFieldNullable(Field field) {
-        if (!NULLABLE_FIELD_CACHE.containsKey(field)) {
-            Annotation annotation = field.getAnnotation(CFNotNull.class);
-            synchronized (NULLABLE_FIELD_CACHE) {
-                NULLABLE_FIELD_CACHE.put(field, annotation == null);
+    private Annotation getNotNullAnnotation(Field field) {
+        Annotation annotation = NOT_NULL_ANNOTATION_CACHE.get(field);
+
+        if (annotation == null) {
+            annotation = field.getAnnotation(CFNotNull.class);
+            synchronized (NOT_NULL_ANNOTATION_CACHE) {
+                NOT_NULL_ANNOTATION_CACHE.put(field, annotation);
             }
         }
-        return NULLABLE_FIELD_CACHE.get(field);
+        return annotation;
     }
 
     private String getCanonicalName(Class clazz) {
@@ -383,8 +384,8 @@ public class RemotingCommand {
                         try {
                             field.setAccessible(true);
                             value = field.get(this.customHeader);
-                        } catch (Exception e) {
-                            log.error("Failed to access field [{}]", name, e);
+                        } catch (IllegalArgumentException e) {
+                        } catch (IllegalAccessException e) {
                         }
 
                         if (value != null) {
@@ -399,6 +400,7 @@ public class RemotingCommand {
     public ByteBuffer encodeHeader() {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
+
 
     public ByteBuffer encodeHeader(final int bodyLength) {
         // 1> header length size

@@ -20,9 +20,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.log.ClientLogger;
-import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.slf4j.Logger;
 
 public class MQHelper {
     public static void resetOffsetByTimestamp(
@@ -41,6 +41,7 @@ public class MQHelper {
      * @param consumerGroup consumer group
      * @param topic topic
      * @param timestamp time
+     * @throws Exception
      */
     public static void resetOffsetByTimestamp(
         final MessageModel messageModel,
@@ -48,7 +49,7 @@ public class MQHelper {
         final String consumerGroup,
         final String topic,
         final long timestamp) throws Exception {
-        final InternalLogger log = ClientLogger.getLog();
+        final Logger log = ClientLogger.getLog();
 
         DefaultMQPullConsumer consumer = new DefaultMQPullConsumer(consumerGroup);
         consumer.setInstanceName(instanceName);

@@ -16,6 +16,8 @@
  */
 package org.apache.rocketmq.common;
 
+import org.apache.rocketmq.remoting.common.RemotingHelper;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -23,35 +25,20 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
-import org.apache.rocketmq.remoting.common.RemotingHelper;
 
 public class UtilAll {
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);
-
     public static final String YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
     public static final String YYYY_MM_DD_HH_MM_SS_SSS = "yyyy-MM-dd#HH:mm:ss:SSS";
-    public static final String YYYYMMDDHHMMSS = "yyyyMMddHHmmss";
+    public static final String YYYY_MMDD_HHMMSS = "yyyyMMddHHmmss";
     final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     public static int getPid() {
@@ -62,18 +49,6 @@ public class UtilAll {
         } catch (Exception e) {
             return -1;
         }
-    }
-
-    public static void sleep(long sleepMs) {
-        if (sleepMs < 0) {
-            return;
-        }
-        try {
-            Thread.sleep(sleepMs);
-        } catch (Throwable ignored) {
-
-        }
-
     }
 
     public static String currentStackTrace() {
@@ -95,7 +70,7 @@ public class UtilAll {
         return nf.format(offset);
     }
 
-    public static long computeElapsedTimeMilliseconds(final long beginTime) {
+    public static long computeEclipseTimeMilliseconds(final long beginTime) {
         return System.currentTimeMillis() - beginTime;
     }
 
@@ -126,7 +101,7 @@ public class UtilAll {
             cal.get(Calendar.MILLISECOND));
     }
 
-    public static long computeNextMorningTimeMillis() {
+    public static long computNextMorningTimeMillis() {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
         cal.add(Calendar.DAY_OF_MONTH, 1);
@@ -138,7 +113,7 @@ public class UtilAll {
         return cal.getTimeInMillis();
     }
 
-    public static long computeNextMinutesTimeMillis() {
+    public static long computNextMinutesTimeMillis() {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
         cal.add(Calendar.DAY_OF_MONTH, 0);
@@ -150,7 +125,7 @@ public class UtilAll {
         return cal.getTimeInMillis();
     }
 
-    public static long computeNextHourTimeMillis() {
+    public static long computNextHourTimeMillis() {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
         cal.add(Calendar.DAY_OF_MONTH, 0);
@@ -162,7 +137,7 @@ public class UtilAll {
         return cal.getTimeInMillis();
     }
 
-    public static long computeNextHalfHourTimeMillis() {
+    public static long computNextHalfHourTimeMillis() {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
         cal.add(Calendar.DAY_OF_MONTH, 0);
@@ -224,6 +199,7 @@ public class UtilAll {
         return -1;
     }
 
+
     public static int crc32(byte[] array) {
         if (array != null) {
             return crc32(array, 0, array.length);
@@ -232,12 +208,19 @@ public class UtilAll {
         return 0;
     }
 
+
     public static int crc32(byte[] array, int offset, int length) {
         CRC32 crc32 = new CRC32();
         crc32.update(array, offset, length);
         return (int) (crc32.getValue() & 0x7FFFFFFF);
     }
 
+    /**
+     * 二进制转十六进制字符串
+     *
+     * @param src 二进制数组
+     * @return 十六进制字符串
+     */
     public static String bytes2string(byte[] src) {
         char[] hexChars = new char[src.length * 2];
         for (int j = 0; j < src.length; j++) {
@@ -289,18 +272,15 @@ public class UtilAll {
         } finally {
             try {
                 byteArrayInputStream.close();
-            } catch (IOException e) {
-                log.error("Failed to close the stream", e);
+            } catch (IOException ignored) {
             }
             try {
                 inflaterInputStream.close();
-            } catch (IOException e) {
-                log.error("Failed to close the stream", e);
+            } catch (IOException ignored) {
             }
             try {
                 byteArrayOutputStream.close();
-            } catch (IOException e) {
-                log.error("Failed to close the stream", e);
+            } catch (IOException ignored) {
             }
         }
 
@@ -440,20 +420,13 @@ public class UtilAll {
         return false;
     }
 
-    public static boolean isInternalV6IP(InetAddress inetAddr) {
-        if (inetAddr.isAnyLocalAddress() // Wild card ipv6
-            || inetAddr.isLinkLocalAddress() // Single broadcast ipv6 address: fe80:xx:xx...
-            || inetAddr.isLoopbackAddress() //Loopback ipv6 address
-            || inetAddr.isSiteLocalAddress()) { // Site local ipv6 address: fec0:xx:xx...
-            return true;
-        }
-        return false;
-    }
-
     private static boolean ipCheck(byte[] ip) {
         if (ip.length != 4) {
             throw new RuntimeException("illegal ipv4 bytes");
         }
+
+//        if (ip[0] == (byte)30 && ip[1] == (byte)10 && ip[2] == (byte)163 && ip[3] == (byte)120) {
+//        }
 
         if (ip[0] >= (byte) 1 && ip[0] <= (byte) 126) {
             if (ip[1] == (byte) 1 && ip[2] == (byte) 1 && ip[3] == (byte) 1) {
@@ -483,15 +456,6 @@ public class UtilAll {
         return false;
     }
 
-    private static boolean ipV6Check(byte[] ip) {
-        if (ip.length != 16) {
-            throw new RuntimeException("illegal ipv6 bytes");
-        }
-
-        InetAddressValidator validator = InetAddressValidator.getInstance();
-        return validator.isValidInet6Address(ipToIPv6Str(ip));
-    }
-
     public static String ipToIPv4Str(byte[] ip) {
         if (ip.length != 4) {
             return null;
@@ -499,25 +463,6 @@ public class UtilAll {
         return new StringBuilder().append(ip[0] & 0xFF).append(".").append(
             ip[1] & 0xFF).append(".").append(ip[2] & 0xFF)
             .append(".").append(ip[3] & 0xFF).toString();
-    }
-
-    public static String ipToIPv6Str(byte[] ip) {
-        if (ip.length != 16) {
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ip.length; i++) {
-            String hex = Integer.toHexString(ip[i] & 0xFF);
-            if (hex.length() < 2) {
-                sb.append(0);
-            }
-            sb.append(hex);
-            if (i % 2 == 1 && i < ip.length - 1) {
-                sb.append(":");
-            }
-        }
-        return sb.toString();
     }
 
     public static byte[] getIP() {
@@ -541,15 +486,6 @@ public class UtilAll {
                                 }
                             }
                         }
-                    } else if (ip != null && ip instanceof Inet6Address) {
-                        byte[] ipByte = ip.getAddress();
-                        if (ipByte.length == 16) {
-                            if (ipV6Check(ipByte)) {
-                                if (!isInternalV6IP(ip)) {
-                                    return ipByte;
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -561,44 +497,5 @@ public class UtilAll {
         } catch (Exception e) {
             throw new RuntimeException("Can not get local ip", e);
         }
-    }
-
-    public static void deleteFile(File file) {
-        if (!file.exists()) {
-            return;
-        }
-        if (file.isFile()) {
-            file.delete();
-        } else if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            for (File file1 : files) {
-                deleteFile(file1);
-            }
-            file.delete();
-        }
-    }
-
-    public static String list2String(List<String> list, String splitor) {
-        if (list == null || list.size() == 0) {
-            return null;
-        }
-        StringBuffer str = new StringBuffer();
-        for (int i = 0; i < list.size(); i++) {
-            str.append(list.get(i));
-            if (i == list.size() - 1) {
-                continue;
-            }
-            str.append(splitor);
-        }
-        return str.toString();
-    }
-
-    public static List<String> string2List(String str, String splitor) {
-        if (StringUtils.isEmpty(str)) {
-            return null;
-        }
-
-        String[] addrArray = str.split(splitor);
-        return Arrays.asList(addrArray);
     }
 }

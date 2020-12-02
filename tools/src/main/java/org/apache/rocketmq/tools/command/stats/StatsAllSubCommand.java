@@ -35,7 +35,6 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class StatsAllSubCommand implements SubCommand {
     public static void printTopicDetail(final DefaultMQAdminExt admin, final String topic, final boolean activeTopic)
@@ -161,7 +160,7 @@ public class StatsAllSubCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook);
 
         defaultMQAdminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
@@ -189,7 +188,7 @@ public class StatsAllSubCommand implements SubCommand {
                     continue;
                 }
 
-                if (selectTopic != null && !selectTopic.isEmpty() && !topic.equals(selectTopic)) {
+                if (selectTopic != null && selectTopic != "" && !topic.equals(selectTopic)) {
                     continue;
                 }
 
@@ -199,7 +198,7 @@ public class StatsAllSubCommand implements SubCommand {
                 }
             }
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             defaultMQAdminExt.shutdown();
         }

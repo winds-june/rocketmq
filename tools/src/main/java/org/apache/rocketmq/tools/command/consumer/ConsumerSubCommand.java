@@ -31,7 +31,6 @@ import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.MQAdminStartup;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class ConsumerSubCommand implements SubCommand {
 
@@ -64,7 +63,7 @@ public class ConsumerSubCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         DefaultMQAdminExt defaultMQAdminExt = new DefaultMQAdminExt(rpcHook);
 
         defaultMQAdminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
@@ -114,7 +113,7 @@ public class ConsumerSubCommand implements SubCommand {
                             String result =
                                 ConsumerRunningInfo.analyzeProcessQueue(next.getKey(), next.getValue());
                             if (result.length() > 0) {
-                                System.out.printf("%s", result);
+                                System.out.printf(result);
                             }
                         }
                     } else {
@@ -126,11 +125,11 @@ public class ConsumerSubCommand implements SubCommand {
                 ConsumerRunningInfo consumerRunningInfo =
                     defaultMQAdminExt.getConsumerRunningInfo(group, clientId, jstack);
                 if (consumerRunningInfo != null) {
-                    System.out.printf("%s", consumerRunningInfo.formatString());
+                    System.out.printf(consumerRunningInfo.formatString());
                 }
             }
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             defaultMQAdminExt.shutdown();
         }

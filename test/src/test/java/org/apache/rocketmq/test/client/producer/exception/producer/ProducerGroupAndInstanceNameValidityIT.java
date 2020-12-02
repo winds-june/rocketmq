@@ -39,7 +39,7 @@ public class ProducerGroupAndInstanceNameValidityIT extends BaseConf {
 
     @After
     public void tearDown() {
-        super.shutdown();
+        super.shutDown();
     }
 
     /**

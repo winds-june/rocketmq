@@ -26,7 +26,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.test.clientinterface.AbstractMQProducer;
-import org.apache.rocketmq.test.sendresult.ResultWrapper;
+import org.apache.rocketmq.test.sendresult.SendResult;
 
 public class RMQNormalProducer extends AbstractMQProducer {
     private static Logger logger = Logger.getLogger(RMQNormalProducer.class);
@@ -34,29 +34,20 @@ public class RMQNormalProducer extends AbstractMQProducer {
     private String nsAddr = null;
 
     public RMQNormalProducer(String nsAddr, String topic) {
-        this(nsAddr, topic, false);
-    }
-
-    public RMQNormalProducer(String nsAddr, String topic, boolean useTLS) {
         super(topic);
         this.nsAddr = nsAddr;
-        create(useTLS);
+        create();
         start();
     }
 
     public RMQNormalProducer(String nsAddr, String topic, String producerGroupName,
         String producerInstanceName) {
-        this(nsAddr, topic, producerGroupName, producerInstanceName, false);
-    }
-
-    public RMQNormalProducer(String nsAddr, String topic, String producerGroupName,
-        String producerInstanceName, boolean useTLS) {
         super(topic);
         this.producerGroupName = producerGroupName;
         this.producerInstanceName = producerInstanceName;
         this.nsAddr = nsAddr;
 
-        create(useTLS);
+        create();
         start();
     }
 
@@ -68,17 +59,16 @@ public class RMQNormalProducer extends AbstractMQProducer {
         this.producer = producer;
     }
 
-    protected void create(boolean useTLS) {
+    protected void create() {
         producer = new DefaultMQProducer();
         producer.setProducerGroup(getProducerGroupName());
         producer.setInstanceName(getProducerInstanceName());
-        producer.setUseTLS(useTLS);
 
         if (nsAddr != null) {
             producer.setNamesrvAddr(nsAddr);
         }
-    }
 
+    }
 
     public void start() {
         try {
@@ -91,12 +81,12 @@ public class RMQNormalProducer extends AbstractMQProducer {
         }
     }
 
-    public ResultWrapper send(Object msg, Object orderKey) {
+    public SendResult send(Object msg, Object orderKey) {
         org.apache.rocketmq.client.producer.SendResult metaqResult = null;
-        Message message = (Message) msg;
+        Message metaqMsg = (Message) msg;
         try {
             long start = System.currentTimeMillis();
-            metaqResult = producer.send(message);
+            metaqResult = producer.send(metaqMsg);
             this.msgRTs.addData(System.currentTimeMillis() - start);
             if (isDebug) {
                 logger.info(metaqResult);
@@ -104,9 +94,9 @@ public class RMQNormalProducer extends AbstractMQProducer {
             sendResult.setMsgId(metaqResult.getMsgId());
             sendResult.setSendResult(metaqResult.getSendStatus().equals(SendStatus.SEND_OK));
             sendResult.setBrokerIp(metaqResult.getMessageQueue().getBrokerName());
-            msgBodys.addData(new String(message.getBody()));
+            msgBodys.addData(new String(metaqMsg.getBody()));
             originMsgs.addData(msg);
-            originMsgIndex.put(new String(message.getBody()), metaqResult);
+            originMsgIndex.put(new String(metaqMsg.getBody()), metaqResult);
         } catch (Exception e) {
             if (isDebug) {
                 e.printStackTrace();
@@ -132,7 +122,7 @@ public class RMQNormalProducer extends AbstractMQProducer {
         }
     }
 
-    public ResultWrapper sendMQ(Message msg, MessageQueue mq) {
+    public SendResult sendMQ(Message msg, MessageQueue mq) {
         org.apache.rocketmq.client.producer.SendResult metaqResult = null;
         try {
             long start = System.currentTimeMillis();

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
@@ -33,7 +32,6 @@ import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
 import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.impl.CommunicationMode;
 import org.apache.rocketmq.client.impl.FindBrokerResult;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
@@ -54,19 +52,15 @@ import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.header.PullMessageRequestHeader;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.failBecauseExceptionWasNotThrown;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -76,14 +70,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(DefaultMQPushConsumerImpl.class)
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultMQPushConsumerTest {
     private String consumerGroup;
     private String topic = "FooBar";
     private String brokerName = "BrokerA";
     private MQClientInstance mQClientFactory;
-
     @Mock
     private MQClientAPIImpl mQClientAPIImpl;
     private PullAPIWrapper pullAPIWrapper;
@@ -98,20 +90,17 @@ public class DefaultMQPushConsumerTest {
         pushConsumer.setPullInterval(60 * 1000);
 
         pushConsumer.registerMessageListener(new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+            @Override public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                 ConsumeConcurrentlyContext context) {
                 return null;
             }
         });
 
         DefaultMQPushConsumerImpl pushConsumerImpl = pushConsumer.getDefaultMQPushConsumerImpl();
-        PowerMockito.suppress(PowerMockito.method(DefaultMQPushConsumerImpl.class, "updateTopicSubscribeInfoWhenSubscriptionChanged"));
         rebalancePushImpl = spy(new RebalancePushImpl(pushConsumer.getDefaultMQPushConsumerImpl()));
         Field field = DefaultMQPushConsumerImpl.class.getDeclaredField("rebalanceImpl");
         field.setAccessible(true);
         field.set(pushConsumerImpl, rebalancePushImpl);
-
         pushConsumer.subscribe(topic, "*");
         pushConsumer.start();
 
@@ -119,6 +108,7 @@ public class DefaultMQPushConsumerTest {
         field = DefaultMQPushConsumerImpl.class.getDeclaredField("mQClientFactory");
         field.setAccessible(true);
         field.set(pushConsumerImpl, mQClientFactory);
+
 
         field = MQClientInstance.class.getDeclaredField("mQClientAPIImpl");
         field.setAccessible(true);
@@ -135,26 +125,25 @@ public class DefaultMQPushConsumerTest {
         when(mQClientFactory.getMQClientAPIImpl().pullMessage(anyString(), any(PullMessageRequestHeader.class),
             anyLong(), any(CommunicationMode.class), nullable(PullCallback.class)))
             .thenAnswer(new Answer<Object>() {
-                @Override
-                public Object answer(InvocationOnMock mock) throws Throwable {
-                    PullMessageRequestHeader requestHeader = mock.getArgument(1);
-                    MessageClientExt messageClientExt = new MessageClientExt();
-                    messageClientExt.setTopic(topic);
-                    messageClientExt.setQueueId(0);
-                    messageClientExt.setMsgId("123");
-                    messageClientExt.setBody(new byte[] {'a'});
-                    messageClientExt.setOffsetMsgId("234");
-                    messageClientExt.setBornHost(new InetSocketAddress(8080));
-                    messageClientExt.setStoreHost(new InetSocketAddress(8080));
-                    PullResult pullResult = createPullResult(requestHeader, PullStatus.FOUND, Collections.<MessageExt>singletonList(messageClientExt));
-                    ((PullCallback) mock.getArgument(4)).onSuccess(pullResult);
-                    return pullResult;
-                }
-            });
+            @Override public Object answer(InvocationOnMock mock) throws Throwable {
+                PullMessageRequestHeader requestHeader = mock.getArgument(1);
+                MessageClientExt messageClientExt = new MessageClientExt();
+                messageClientExt.setTopic(topic);
+                messageClientExt.setQueueId(0);
+                messageClientExt.setMsgId("123");
+                messageClientExt.setBody(new byte[] {'a'});
+                messageClientExt.setOffsetMsgId("234");
+                messageClientExt.setBornHost(new InetSocketAddress(8080));
+                messageClientExt.setStoreHost(new InetSocketAddress(8080));
+                PullResult pullResult = createPullResult(requestHeader, PullStatus.FOUND, Collections.<MessageExt>singletonList(messageClientExt));
+                ((PullCallback)mock.getArgument(4)).onSuccess(pullResult);
+                return pullResult;
+            }
+        });
 
         doReturn(new FindBrokerResult("127.0.0.1:10911", false)).when(mQClientFactory).findBrokerAddressInSubscribe(anyString(), anyLong(), anyBoolean());
         doReturn(Collections.singletonList(mQClientFactory.getClientId())).when(mQClientFactory).findConsumerIdList(anyString(), anyString());
-        Set<MessageQueue> messageQueueSet = new HashSet<MessageQueue>();
+        Set<MessageQueue> messageQueueSet = new HashSet<>();
         messageQueueSet.add(createPullRequest().getMessageQueue());
         pushConsumer.getDefaultMQPushConsumerImpl().updateTopicSubscribeInfo(topic, messageQueueSet);
         doReturn(123L).when(rebalancePushImpl).computePullFromWhere(any(MessageQueue.class));
@@ -166,17 +155,11 @@ public class DefaultMQPushConsumerTest {
     }
 
     @Test
-    public void testStart_OffsetShouldNotNUllAfterStart() {
-        Assert.assertNotNull(pushConsumer.getOffsetStore());
-    }
-
-    @Test
     public void testPullMessage_Success() throws InterruptedException, RemotingException, MQBrokerException {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final MessageExt[] messageExts = new MessageExt[1];
         pushConsumer.getDefaultMQPushConsumerImpl().setConsumeMessageService(new ConsumeMessageConcurrentlyService(pushConsumer.getDefaultMQPushConsumerImpl(), new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+            @Override public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                 ConsumeConcurrentlyContext context) {
                 messageExts[0] = msgs.get(0);
                 countDownLatch.countDown();
@@ -216,87 +199,6 @@ public class DefaultMQPushConsumerTest {
         assertThat(messageExts[0].getBody()).isEqualTo(new byte[] {'a'});
     }
 
-    @Test
-    public void testCheckConfig() {
-        DefaultMQPushConsumer pushConsumer = createPushConsumer();
-
-        pushConsumer.setPullThresholdForQueue(65535 + 1);
-        try {
-            pushConsumer.start();
-            failBecauseExceptionWasNotThrown(MQClientException.class);
-        } catch (MQClientException e) {
-            assertThat(e).hasMessageContaining("pullThresholdForQueue Out of range [1, 65535]");
-        }
-
-        pushConsumer = createPushConsumer();
-        pushConsumer.setPullThresholdForTopic(65535 * 100 + 1);
-
-        try {
-            pushConsumer.start();
-            failBecauseExceptionWasNotThrown(MQClientException.class);
-        } catch (MQClientException e) {
-            assertThat(e).hasMessageContaining("pullThresholdForTopic Out of range [1, 6553500]");
-        }
-
-        pushConsumer = createPushConsumer();
-        pushConsumer.setPullThresholdSizeForQueue(1024 + 1);
-        try {
-            pushConsumer.start();
-            failBecauseExceptionWasNotThrown(MQClientException.class);
-        } catch (MQClientException e) {
-            assertThat(e).hasMessageContaining("pullThresholdSizeForQueue Out of range [1, 1024]");
-        }
-
-        pushConsumer = createPushConsumer();
-        pushConsumer.setPullThresholdSizeForTopic(1024 * 100 + 1);
-        try {
-            pushConsumer.start();
-            failBecauseExceptionWasNotThrown(MQClientException.class);
-        } catch (MQClientException e) {
-            assertThat(e).hasMessageContaining("pullThresholdSizeForTopic Out of range [1, 102400]");
-        }
-    }
-
-    @Test
-    public void testGracefulShutdown() throws InterruptedException, RemotingException, MQBrokerException, MQClientException {
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        pushConsumer.setAwaitTerminationMillisWhenShutdown(2000);
-        final AtomicBoolean messageConsumedFlag = new AtomicBoolean(false);
-        pushConsumer.getDefaultMQPushConsumerImpl().setConsumeMessageService(new ConsumeMessageConcurrentlyService(pushConsumer.getDefaultMQPushConsumerImpl(), new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                                                            ConsumeConcurrentlyContext context) {
-                countDownLatch.countDown();
-                try {
-                    Thread.sleep(1000);
-                    messageConsumedFlag.set(true);
-                } catch (InterruptedException e) {
-                }
-
-                return null;
-            }
-        }));
-
-        PullMessageService pullMessageService = mQClientFactory.getPullMessageService();
-        pullMessageService.executePullRequestImmediately(createPullRequest());
-        countDownLatch.await();
-
-        pushConsumer.shutdown();
-        assertThat(messageConsumedFlag.get()).isTrue();
-    }
-
-    private DefaultMQPushConsumer createPushConsumer() {
-        DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(consumerGroup);
-        pushConsumer.registerMessageListener(new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                ConsumeConcurrentlyContext context) {
-                return null;
-            }
-        });
-        return pushConsumer;
-    }
-
     private PullRequest createPullRequest() {
         PullRequest pullRequest = new PullRequest();
         pullRequest.setConsumerGroup(consumerGroup);
@@ -315,8 +217,7 @@ public class DefaultMQPushConsumerTest {
         return pullRequest;
     }
 
-    private PullResultExt createPullResult(PullMessageRequestHeader requestHeader, PullStatus pullStatus,
-        List<MessageExt> messageExtList) throws Exception {
+    private PullResultExt createPullResult(PullMessageRequestHeader requestHeader, PullStatus pullStatus, List<MessageExt> messageExtList) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         for (MessageExt messageExt : messageExtList) {
             outputStream.write(MessageDecoder.encode(messageExt, false));

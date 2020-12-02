@@ -17,18 +17,24 @@
 package org.apache.rocketmq.broker.client;
 
 import io.netty.channel.Channel;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.rocketmq.broker.BrokerController;
 import org.apache.rocketmq.common.ThreadFactoryImpl;
 import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.ChannelEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Broker对Client的Channel事件监听服务
+ */
 public class ClientHousekeepingService implements ChannelEventListener {
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+
+    private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
 
     private ScheduledExecutorService scheduledExecutorService = Executors
@@ -45,8 +51,8 @@ public class ClientHousekeepingService implements ChannelEventListener {
             public void run() {
                 try {
                     ClientHousekeepingService.this.scanExceptionChannel();
-                } catch (Throwable e) {
-                    log.error("Error occurred when scan not active client channels.", e);
+                } catch (Exception e) {
+                    log.error("", e);
                 }
             }
         }, 1000 * 10, 1000 * 10, TimeUnit.MILLISECONDS);

@@ -19,14 +19,28 @@ package org.apache.rocketmq.client.common;
 
 import java.util.Random;
 
+/**
+ * 线程变量（Index）
+ */
 public class ThreadLocalIndex {
+    /**
+     * 线程变量（Index）
+     */
     private final ThreadLocal<Integer> threadLocalIndex = new ThreadLocal<Integer>();
+    /**
+     * 随机数
+     */
     private final Random random = new Random();
 
+    /**
+     * 获取当前线程数列号，并加一
+     *
+     * @return 序列号
+     */
     public int getAndIncrement() {
         Integer index = this.threadLocalIndex.get();
         if (null == index) {
-            index = Math.abs(random.nextInt());
+            index = Math.abs(random.nextInt()); // 发送者线程第一次发送，随机生成一个Index
             if (index < 0)
                 index = 0;
             this.threadLocalIndex.set(index);

@@ -22,7 +22,7 @@ import org.apache.rocketmq.test.base.BaseConf;
 import org.apache.rocketmq.test.client.consumer.tag.TagMessageWith1ConsumerIT;
 import org.apache.rocketmq.test.client.rmq.RMQAsyncSendProducer;
 import org.apache.rocketmq.test.client.rmq.RMQNormalConsumer;
-import org.apache.rocketmq.test.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.test.listener.rmq.concurrent.RMQNormalListner;
 import org.apache.rocketmq.test.util.VerifyUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -44,20 +44,20 @@ public class AsyncSendWithOnlySendCallBackIT extends BaseConf {
 
     @After
     public void tearDown() {
-        super.shutdown();
+        super.shutDown();
     }
 
     @Test
     public void testSendWithOnlyCallBack() {
         int msgSize = 20;
-        RMQNormalConsumer consumer = getConsumer(nsAddr, topic, "*", new RMQNormalListener());
+        RMQNormalConsumer consumer = getConsumer(nsAddr, topic, "*", new RMQNormalListner());
         producer.asyncSend(msgSize);
         producer.waitForResponse(10 * 1000);
         assertThat(producer.getSuccessMsgCount()).isEqualTo(msgSize);
 
-        consumer.getListener().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+        consumer.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
         assertThat(VerifyUtils.getFilterdMessage(producer.getAllMsgBody(),
-            consumer.getListener().getAllMsgBody()))
+            consumer.getListner().getAllMsgBody()))
             .containsExactlyElementsIn(producer.getAllMsgBody());
     }
 

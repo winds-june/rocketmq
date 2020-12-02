@@ -30,7 +30,6 @@ import org.apache.rocketmq.srvutil.ServerUtil;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.CommandUtil;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class DeleteTopicSubCommand implements SubCommand {
     public static void deleteTopic(final DefaultMQAdminExt adminExt,
@@ -38,8 +37,8 @@ public class DeleteTopicSubCommand implements SubCommand {
         final String topic
     ) throws InterruptedException, MQBrokerException, RemotingException, MQClientException {
 
-        Set<String> brokerAddressSet = CommandUtil.fetchMasterAndSlaveAddrByClusterName(adminExt, clusterName);
-        adminExt.deleteTopicInBroker(brokerAddressSet, topic);
+        Set<String> masterSet = CommandUtil.fetchMasterAddrByClusterName(adminExt, clusterName);
+        adminExt.deleteTopicInBroker(masterSet, topic);
         System.out.printf("delete topic [%s] from cluster [%s] success.%n", topic, clusterName);
 
         Set<String> nameServerSet = null;
@@ -76,7 +75,7 @@ public class DeleteTopicSubCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         DefaultMQAdminExt adminExt = new DefaultMQAdminExt(rpcHook);
         adminExt.setInstanceName(Long.toString(System.currentTimeMillis()));
         try {
@@ -92,7 +91,7 @@ public class DeleteTopicSubCommand implements SubCommand {
 
             ServerUtil.printCommandLineHelp("mqadmin " + this.commandName(), options);
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             adminExt.shutdown();
         }

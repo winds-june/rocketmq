@@ -20,8 +20,6 @@ package org.apache.rocketmq.test.clientinterface;
 public interface MQConsumer {
     void create();
 
-    void create(boolean useTLS);
-
     void start();
 
     void shutdown();

@@ -17,9 +17,18 @@
 
 package org.apache.rocketmq.store;
 
-import java.util.Map;
-
+/**
+ * 新消息到达监听器接口
+ */
 public interface MessageArrivingListener {
-    void arriving(String topic, int queueId, long logicOffset, long tagsCode,
-        long msgStoreTime, byte[] filterBitMap, Map<String, String> properties);
+
+    /**
+     * 新消息
+     *
+     * @param topic 主题
+     * @param queueId 队列编号
+     * @param logicOffset 队列位置
+     * @param tagsCode 消息tagsCode
+     */
+    void arriving(String topic, int queueId, long logicOffset, long tagsCode);
 }

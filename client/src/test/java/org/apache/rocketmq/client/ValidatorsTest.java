@@ -19,12 +19,11 @@ package org.apache.rocketmq.client;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.topic.TopicValidator;
+import org.apache.rocketmq.common.MixAll;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.failBecauseExceptionWasNotThrown;
-import static org.junit.Assert.fail;
 
 public class ValidatorsTest {
 
@@ -49,6 +48,17 @@ public class ValidatorsTest {
     }
 
     @Test
+    public void testCheckTopic_UseDefaultTopic() {
+        String defaultTopic = MixAll.DEFAULT_TOPIC;
+        try {
+            Validators.checkTopic(defaultTopic);
+            failBecauseExceptionWasNotThrown(MQClientException.class);
+        } catch (MQClientException e) {
+            assertThat(e).hasMessageStartingWith(String.format("The topic[%s] is conflict with default topic.", defaultTopic));
+        }
+    }
+
+    @Test
     public void testCheckTopic_BlankTopic() {
         String blankTopic = "";
         try {
@@ -61,39 +71,13 @@ public class ValidatorsTest {
 
     @Test
     public void testCheckTopic_TooLongTopic() {
-        String tooLongTopic = StringUtils.rightPad("TooLongTopic", Validators.TOPIC_MAX_LENGTH + 1, "_");
-        assertThat(tooLongTopic.length()).isGreaterThan(Validators.TOPIC_MAX_LENGTH);
+        String tooLongTopic = StringUtils.rightPad("TooLongTopic", Validators.CHARACTER_MAX_LENGTH + 1, "_");
+        assertThat(tooLongTopic.length()).isGreaterThan(Validators.CHARACTER_MAX_LENGTH);
         try {
             Validators.checkTopic(tooLongTopic);
             failBecauseExceptionWasNotThrown(MQClientException.class);
         } catch (MQClientException e) {
-            assertThat(e).hasMessageStartingWith("The specified topic is longer than topic max length");
-        }
-    }
-
-    @Test
-    public void testIsSystemTopic() {
-        for (String topic : TopicValidator.getSystemTopicSet()) {
-            try {
-                Validators.isSystemTopic(topic);
-                fail("excepted MQClientException for system topic");
-            } catch (MQClientException e) {
-                assertThat(e.getResponseCode()).isEqualTo(-1);
-                assertThat(e.getErrorMessage()).isEqualTo(String.format("The topic[%s] is conflict with system topic.", topic));
-            }
-        }
-    }
-
-    @Test
-    public void testIsNotAllowedSendTopic() {
-        for (String topic : TopicValidator.getNotAllowedSendTopicSet()) {
-            try {
-                Validators.isNotAllowedSendTopic(topic);
-                fail("excepted MQClientException for blacklist topic");
-            } catch (MQClientException e) {
-                assertThat(e.getResponseCode()).isEqualTo(-1);
-                assertThat(e.getErrorMessage()).isEqualTo(String.format("Sending message to topic[%s] is forbidden.", topic));
-            }
+            assertThat(e).hasMessageStartingWith("The specified topic is longer than topic max length 255.");
         }
     }
 }

@@ -18,22 +18,21 @@
 package org.apache.rocketmq.common.protocol.body;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import org.apache.rocketmq.common.DataVersion;
 import org.apache.rocketmq.common.subscription.SubscriptionGroupConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
 public class SubscriptionGroupWrapper extends RemotingSerializable {
-    private ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable =
+    private ConcurrentHashMap<String, SubscriptionGroupConfig> subscriptionGroupTable =
         new ConcurrentHashMap<String, SubscriptionGroupConfig>(1024);
     private DataVersion dataVersion = new DataVersion();
 
-    public ConcurrentMap<String, SubscriptionGroupConfig> getSubscriptionGroupTable() {
+    public ConcurrentHashMap<String, SubscriptionGroupConfig> getSubscriptionGroupTable() {
         return subscriptionGroupTable;
     }
 
     public void setSubscriptionGroupTable(
-        ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable) {
+        ConcurrentHashMap<String, SubscriptionGroupConfig> subscriptionGroupTable) {
         this.subscriptionGroupTable = subscriptionGroupTable;
     }
 

@@ -28,7 +28,6 @@ import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class CloneGroupOffsetCommand implements SubCommand {
     @Override
@@ -65,7 +64,7 @@ public class CloneGroupOffsetCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         String srcGroup = commandLine.getOptionValue("s").trim();
         String destGroup = commandLine.getOptionValue("d").trim();
         String topic = commandLine.getOptionValue("t").trim();
@@ -96,7 +95,7 @@ public class CloneGroupOffsetCommand implements SubCommand {
             System.out.printf("clone group offset success. srcGroup[%s], destGroup=[%s], topic[%s]",
                 srcGroup, destGroup, topic);
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             defaultMQAdminExt.shutdown();
         }

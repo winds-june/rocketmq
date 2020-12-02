@@ -91,21 +91,11 @@ public abstract class MQCollector {
     }
 
     public void clearMsg() {
-        if (msgBodys != null) {
-            msgBodys.resetData();
-        }
-        if (originMsgs != null) {
-            originMsgs.resetData();
-        }
-        if (originMsgs != null) {
-            errorMsgs.resetData();
-        }
-        if (originMsgIndex != null) {
-            originMsgIndex.clear();
-        }
-        if (msgRTs != null) {
-            msgRTs.resetData();
-        }
+        msgBodys.resetData();
+        originMsgs.resetData();
+        errorMsgs.resetData();
+        originMsgIndex.clear();
+        msgRTs.resetData();
     }
 
     public void lockCollectors() {

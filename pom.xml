@@ -29,48 +29,106 @@
     <inceptionYear>2012</inceptionYear>
     <groupId>org.apache.rocketmq</groupId>
     <artifactId>rocketmq-all</artifactId>
-    <version>4.7.1</version>
+    <version>4.1.0-incubating-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Apache RocketMQ ${project.version}</name>
-    <url>http://rocketmq.apache.org/</url>
+    <url>http://rocketmq.incubator.apache.org/</url>
 
     <prerequisites>
         <maven>3.2.5</maven>
     </prerequisites>
 
     <scm>
-        <url>git@github.com:apache/rocketmq.git</url>
-        <connection>scm:git:git@github.com:apache/rocketmq.git</connection>
-        <developerConnection>scm:git:git@github.com:apache/rocketmq.git</developerConnection>
-        <tag>rocketmq-all-4.7.1</tag>
-    </scm>
+        <url>https://git-wip-us.apache.org/repos/asf/incubator-rocketmq.git</url>
+        <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-rocketmq.git</connection>
+        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-rocketmq.git
+        </developerConnection>
+      <tag>HEAD</tag>
+  </scm>
 
     <mailingLists>
         <mailingList>
             <name>Development List</name>
-            <subscribe>dev-subscribe@rocketmq.apache.org</subscribe>
-            <unsubscribe>dev-unsubscribe@rocketmq.apache.org</unsubscribe>
-            <post>dev@rocketmq.apache.org</post>
+            <subscribe>dev-subscribe@rocketmq.incubator.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@rocketmq.incubator.apache.org</unsubscribe>
+            <post>dev@rocketmq.incubator.apache.org</post>
         </mailingList>
         <mailingList>
             <name>User List</name>
-            <subscribe>users-subscribe@rocketmq.apache.org</subscribe>
-            <unsubscribe>users-unsubscribe@rocketmq.apache.org</unsubscribe>
-            <post>users@rocketmq.apache.org</post>
+            <subscribe>users-subscribe@rocketmq.incubator.apache.org</subscribe>
+            <unsubscribe>users-unsubscribe@rocketmq.incubator.apache.org</unsubscribe>
+            <post>users@rocketmq.incubator.apache.org</post>
         </mailingList>
         <mailingList>
             <name>Commits List</name>
-            <subscribe>commits-subscribe@rocketmq.apache.org</subscribe>
-            <unsubscribe>commits-unsubscribe@rocketmq.apache.org</unsubscribe>
-            <post>commits@rocketmq.apache.org</post>
+            <subscribe>commits-subscribe@rocketmq.incubator.apache.org</subscribe>
+            <unsubscribe>commits-unsubscribe@rocketmq.incubator.apache.org</unsubscribe>
+            <post>commits@rocketmq.incubator.apache.org</post>
         </mailingList>
     </mailingLists>
 
     <developers>
         <developer>
-            <id>Apache RocketMQ</id>
-            <name>Apache RocketMQ of ASF</name>
-            <url>https://rocketmq.apache.org/</url>
+            <id>vintagewang</id>
+            <name>vintagewang</name>
+            <roles>
+                <role>architect</role>
+                <role>committer</role>
+            </roles>
+            <email>vintagewang@apache.org</email>
+            <url>https://github.com/vintagewang</url>
+            <timezone>8</timezone>
+        </developer>
+        <developer>
+            <id>vongosling@apache.org</id>
+            <name>vongosling@apache.org</name>
+            <roles>
+                <role>architect</role>
+                <role>committer</role>
+            </roles>
+            <email>vongosling@apache.org</email>
+            <url>https://github.com/vongosling@apache.org</url>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>yukon</id>
+            <name>Xinyu Zhou</name>
+            <email>yukon@@apache.org</email>
+            <url>https://github.com/zhouxinyu</url>
+            <roles>
+                <role>committer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>stevenschew</id>
+            <name>Wei Zhou</name>
+            <email>stevenschew@@apache.org</email>
+            <url>https://github.com/stevenschew</url>
+            <roles>
+                <role>committer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>lollipop</id>
+            <name>Jixiang Jin</name>
+            <email>lollipop@apache.org</email>
+            <url>https://github.com/lollipopjin</url>
+            <roles>
+                <role>committer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>lizhanhui</id>
+            <name>Zhanhui Li</name>
+            <email>lizhanhui@apache.org</email>
+            <url>https://github.com/lizhanhui</url>
+            <roles>
+                <role>committer</role>
+            </roles>
+            <timezone>+8</timezone>
         </developer>
     </developers>
 
@@ -100,14 +158,13 @@
         <maven.test.skip>false</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <!-- Compiler settings properties -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <!-- URL of the ASF SonarQube server -->
+        <sonar.host.url>https://builds.apache.org/analysis</sonar.host.url>
         <!-- Exclude all generated code -->
-        <sonar.jacoco.itReportPath>${project.basedir}/../test/target/jacoco-it.exec</sonar.jacoco.itReportPath>
-        <sonar.exclusions>file:**/generated-sources/**,**/test/**</sonar.exclusions>
-        <powermock.version>2.0.2</powermock.version>
-
+        <sonar.exclusions>file:**/generated-sources/**</sonar.exclusions>
     </properties>
 
     <modules>
@@ -118,15 +175,10 @@
         <module>store</module>
         <module>namesrv</module>
         <module>remoting</module>
-        <module>logappender</module>
         <module>example</module>
+        <module>filtersrv</module>
         <module>srvutil</module>
-        <module>filter</module>
         <module>test</module>
-        <module>distribution</module>
-        <module>openmessaging</module>
-        <module>logging</module>
-        <module>acl</module>
     </modules>
 
     <build>
@@ -216,6 +268,9 @@
                     <execution>
                         <id>generate-effective-dependencies-pom</id>
                         <phase>generate-resources</phase>
+                        <goals>
+                            <goal>effective-pom</goal>
+                        </goals>
                         <configuration>
                             <output>${project.build.directory}/effective-pom/effective-dependencies.xml</output>
                         </configuration>
@@ -248,19 +303,9 @@
                 <version>0.12</version>
                 <configuration>
                     <excludes>
-                        <exclude>.gitignore</exclude>
                         <exclude>.travis.yml</exclude>
                         <exclude>CONTRIBUTING.md</exclude>
                         <exclude>bin/README.md</exclude>
-                        <exclude>.github/**</exclude>
-                        <exclude>src/test/resources/certs/*</exclude>
-                        <exclude>src/test/**/*.log</exclude>
-                        <exclude>src/test/resources/META-INF/service/*</exclude>
-                        <exclude>src/main/resources/META-INF/service/*</exclude>
-                        <exclude>*/target/**</exclude>
-                        <exclude>*/*.iml</exclude>
-                        <exclude>docs/**</exclude>
-                        <exclude>localbin/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -280,7 +325,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.7.8</version>
                 <executions>
                     <execution>
                         <id>default-prepare-agent</id>
@@ -320,12 +365,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
-                    <skipAfterFailureCount>1</skipAfterFailureCount>
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
-                    <excludes>
-                        <exclude>**/IT*.java</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -339,15 +380,6 @@
                 <version>3.0.2</version>
             </plugin>
         </plugins>
-
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
 
     <profiles>
@@ -407,6 +439,39 @@
             </build>
         </profile>
         <profile>
+            <id>release-all</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.6</version>
+                        <configuration>
+                            <finalName>apache-rocketmq</finalName>
+                            <descriptors>
+                                <descriptor>release.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release-client</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>apache-rocketmq</finalName>
+                            <descriptors>
+                                <descriptor>release-client.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>it-test</id>
             <build>
                 <plugins>
@@ -414,9 +479,15 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <version>2.19.1</version>
                         <configuration>
+                            <forkCount>1</forkCount>
+                            <reuseForks>true</reuseForks>
                             <argLine>@{failsafeArgLine}</argLine>
                             <excludes>
                                 <exclude>**/NormalMsgDelayIT.java</exclude>
+                                <exclude>**/BroadCastNormalMsgNotRecvIT.java</exclude>
+                                <exclude>**/TagMessageWithSameGroupConsumerIT.java</exclude>
+                                <exclude>**/AsyncSendWithMessageQueueSelectorIT.java</exclude>
+                                <exclude>**/AsyncSendWithMessageQueueIT.java</exclude>
                             </excludes>
                         </configuration>
                         <executions>
@@ -430,13 +501,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>sonar-apache</id>
-            <properties>
-                <!-- URL of the ASF SonarQube server -->
-                <sonar.host.url>https://builds.apache.org/analysis</sonar.host.url>
-            </properties>
         </profile>
     </profiles>
 
@@ -456,19 +520,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.23.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <version>${powermock.version}</version>
+            <version>2.6.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -512,12 +564,12 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>rocketmq-logging</artifactId>
+                <artifactId>rocketmq-test</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>rocketmq-test</artifactId>
+                <artifactId>rocketmq-filtersrv</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -526,24 +578,9 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-filter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>rocketmq-example</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>rocketmq-acl</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.7</version>
+                <version>1.7.5</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -563,12 +600,12 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.0.42.Final</version>
+                <version>4.0.36.Final</version>
             </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
-                <version>1.2.69</version>
+                <version>1.2.29</version>
             </dependency>
             <dependency>
                 <groupId>org.javassist</groupId>
@@ -585,48 +622,6 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>3.4</version>
             </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>19.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.openmessaging</groupId>
-                <artifactId>openmessaging-api</artifactId>
-                <version>0.3.1-alpha</version>
-            </dependency>
-            <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>1.2.17</version>
-            </dependency>
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>1.19</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>1.9</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-core</artifactId>
-                <version>2.7</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
-                <version>2.7</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-validator</groupId>
-                <artifactId>commons-validator</artifactId>
-                <version>1.6</version>
-            </dependency>
-
-
         </dependencies>
     </dependencyManagement>
 </project>

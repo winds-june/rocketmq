@@ -22,12 +22,14 @@ public class RunningFlags {
 
     private static final int NOT_WRITEABLE_BIT = 1 << 1;
 
+    /**
+     * 写消费队列异常标识
+     */
     private static final int WRITE_LOGICS_QUEUE_ERROR_BIT = 1 << 2;
 
     private static final int WRITE_INDEX_FILE_ERROR_BIT = 1 << 3;
 
     private static final int DISK_FULL_BIT = 1 << 4;
-
     private volatile int flagBits = 0;
 
     public RunningFlags() {
@@ -77,15 +79,6 @@ public class RunningFlags {
         return false;
     }
 
-    //for consume queue, just ignore the DISK_FULL_BIT
-    public boolean isCQWriteable() {
-        if ((this.flagBits & (NOT_WRITEABLE_BIT | WRITE_LOGICS_QUEUE_ERROR_BIT | WRITE_INDEX_FILE_ERROR_BIT)) == 0) {
-            return true;
-        }
-
-        return false;
-    }
-
     public boolean getAndMakeNotWriteable() {
         boolean result = this.isWriteable();
         if (result) {
@@ -94,6 +87,9 @@ public class RunningFlags {
         return result;
     }
 
+    /**
+     * 标记消费队列写异常
+     */
     public void makeLogicsQueueError() {
         this.flagBits |= WRITE_LOGICS_QUEUE_ERROR_BIT;
     }

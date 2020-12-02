@@ -16,15 +16,31 @@
  */
 package org.apache.rocketmq.common.sysflag;
 
+/**
+ * 消息系统标记
+ */
 public class MessageSysFlag {
+    /**
+     * 标记位 - 压缩
+     */
     public final static int COMPRESSED_FLAG = 0x1;
     public final static int MULTI_TAGS_FLAG = 0x1 << 1;
+    /**
+     * 事务类型 - 非事务
+     */
     public final static int TRANSACTION_NOT_TYPE = 0;
+    /**
+     * 事务类型 - 事务准备
+     */
     public final static int TRANSACTION_PREPARED_TYPE = 0x1 << 2;
+    /**
+     * 事务类型 - 提交
+     */
     public final static int TRANSACTION_COMMIT_TYPE = 0x2 << 2;
+    /**
+     * 事务类型 - 回滚
+     */
     public final static int TRANSACTION_ROLLBACK_TYPE = 0x3 << 2;
-    public final static int BORNHOST_V6_FLAG = 0x1 << 4;
-    public final static int STOREHOSTADDRESS_V6_FLAG = 0x1 << 5;
 
     public static int getTransactionValue(final int flag) {
         return flag & TRANSACTION_ROLLBACK_TYPE;
@@ -37,5 +53,4 @@ public class MessageSysFlag {
     public static int clearCompressedFlag(final int flag) {
         return flag & (~COMPRESSED_FLAG);
     }
-
 }

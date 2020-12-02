@@ -29,7 +29,6 @@ public class ConsumeMessageContext {
     private String status;
     private Object mqTraceContext;
     private Map<String, String> props;
-    private String namespace;
 
     public String getConsumerGroup() {
         return consumerGroup;
@@ -85,13 +84,5 @@ public class ConsumeMessageContext {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
     }
 }

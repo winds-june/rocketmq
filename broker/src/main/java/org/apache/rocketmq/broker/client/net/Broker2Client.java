@@ -17,15 +17,25 @@
 package org.apache.rocketmq.broker.client.net;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.FileRegion;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.rocketmq.broker.BrokerController;
 import org.apache.rocketmq.broker.client.ClientChannelInfo;
 import org.apache.rocketmq.broker.client.ConsumerGroupInfo;
+import org.apache.rocketmq.broker.pagecache.OneMessageTransfer;
 import org.apache.rocketmq.common.MQVersion;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.common.message.MessageDecoder;
-import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.message.MessageQueueForC;
 import org.apache.rocketmq.common.protocol.RequestCode;
@@ -37,22 +47,17 @@ import org.apache.rocketmq.common.protocol.header.CheckTransactionStateRequestHe
 import org.apache.rocketmq.common.protocol.header.GetConsumerStatusRequestHeader;
 import org.apache.rocketmq.common.protocol.header.NotifyConsumerIdsChangedRequestHeader;
 import org.apache.rocketmq.common.protocol.header.ResetOffsetRequestHeader;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
 import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
+import org.apache.rocketmq.store.SelectMappedBufferResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Broker2Client {
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+
+    private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
 
     public Broker2Client(BrokerController brokerController) {
@@ -60,18 +65,29 @@ public class Broker2Client {
     }
 
     public void checkProducerTransactionState(
-        final String group,
         final Channel channel,
         final CheckTransactionStateRequestHeader requestHeader,
-        final MessageExt messageExt) throws Exception {
+        final SelectMappedBufferResult selectMappedBufferResult) {
         RemotingCommand request =
             RemotingCommand.createRequestCommand(RequestCode.CHECK_TRANSACTION_STATE, requestHeader);
-        request.setBody(MessageDecoder.encode(messageExt, false));
+        request.markOnewayRPC();
+
         try {
-            this.brokerController.getRemotingServer().invokeOneway(channel, request, 10);
-        } catch (Exception e) {
-            log.error("Check transaction failed because invoke producer exception. group={}, msgId={}, error={}",
-                    group, messageExt.getMsgId(), e.toString());
+            FileRegion fileRegion =
+                new OneMessageTransfer(request.encodeHeader(selectMappedBufferResult.getSize()),
+                    selectMappedBufferResult);
+            channel.writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    selectMappedBufferResult.release();
+                    if (!future.isSuccess()) {
+                        log.error("invokeProducer failed,", future.cause());
+                    }
+                }
+            });
+        } catch (Throwable e) {
+            log.error("invokeProducer exception", e);
+            selectMappedBufferResult.release();
         }
     }
 
@@ -81,6 +97,12 @@ public class Broker2Client {
         return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
     }
 
+    /**
+     * 通知指定的生产者或者消费者同组的客户端发生变化
+     *
+     * @param channel
+     * @param consumerGroup
+     */
     public void notifyConsumerIdsChanged(
         final Channel channel,
         final String consumerGroup) {
@@ -97,7 +119,7 @@ public class Broker2Client {
         try {
             this.brokerController.getRemotingServer().invokeOneway(channel, request, 10);
         } catch (Exception e) {
-            log.error("notifyConsumerIdsChanged exception. group={}, error={}", consumerGroup, e.toString());
+            log.error("notifyConsumerIdsChanged exception, " + consumerGroup, e.getMessage());
         }
     }
 
@@ -136,7 +158,7 @@ public class Broker2Client {
             long timeStampOffset;
             if (timeStamp == -1) {
 
-                timeStampOffset = this.brokerController.getMessageStore().getMaxOffsetInQueue(topic, i);
+                timeStampOffset = this.brokerController.getMessageStore().getMaxOffsetInQuque(topic, i);
             } else {
                 timeStampOffset = this.brokerController.getMessageStore().getOffsetInQueueByTime(topic, i, timeStamp);
             }
@@ -176,7 +198,7 @@ public class Broker2Client {
             this.brokerController.getConsumerManager().getConsumerGroupInfo(group);
 
         if (consumerGroupInfo != null && !consumerGroupInfo.getAllChannel().isEmpty()) {
-            ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
+            ConcurrentHashMap<Channel, ClientChannelInfo> channelInfoTable =
                 consumerGroupInfo.getChannelInfoTable();
             for (Map.Entry<Channel, ClientChannelInfo> entry : channelInfoTable.entrySet()) {
                 int version = entry.getValue().getVersion();
@@ -186,14 +208,14 @@ public class Broker2Client {
                         log.info("[reset-offset] reset offset success. topic={}, group={}, clientId={}",
                             topic, group, entry.getValue().getClientId());
                     } catch (Exception e) {
-                        log.error("[reset-offset] reset offset exception. topic={}, group={} ,error={}",
-                            topic, group, e.toString());
+                        log.error("[reset-offset] reset offset exception. topic={}, group={}",
+                            new Object[] {topic, group}, e);
                     }
                 } else {
                     response.setCode(ResponseCode.SYSTEM_ERROR);
                     response.setRemark("the client does not support this feature. version="
                         + MQVersion.getVersionDesc(version));
-                    log.warn("[reset-offset] the client does not support this feature. channel={}, version={}",
+                    log.warn("[reset-offset] the client does not support this feature. version={}",
                         RemotingHelper.parseChannelRemoteAddr(entry.getKey()), MQVersion.getVersionDesc(version));
                     return response;
                 }
@@ -239,7 +261,7 @@ public class Broker2Client {
 
         Map<String, Map<MessageQueue, Long>> consumerStatusTable =
             new HashMap<String, Map<MessageQueue, Long>>();
-        ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
+        ConcurrentHashMap<Channel, ClientChannelInfo> channelInfoTable =
             this.brokerController.getConsumerManager().getConsumerGroupInfo(group).getChannelInfoTable();
         if (null == channelInfoTable || channelInfoTable.isEmpty()) {
             result.setCode(ResponseCode.SYSTEM_ERROR);
@@ -254,7 +276,7 @@ public class Broker2Client {
                 result.setCode(ResponseCode.SYSTEM_ERROR);
                 result.setRemark("the client does not support this feature. version="
                     + MQVersion.getVersionDesc(version));
-                log.warn("[get-consumer-status] the client does not support this feature. channel={}, version={}",
+                log.warn("[get-consumer-status] the client does not support this feature. version={}",
                     RemotingHelper.parseChannelRemoteAddr(entry.getKey()), MQVersion.getVersionDesc(version));
                 return result;
             } else if (UtilAll.isBlank(originClientId) || originClientId.equals(clientId)) {
@@ -280,8 +302,8 @@ public class Broker2Client {
                     }
                 } catch (Exception e) {
                     log.error(
-                        "[get-consumer-status] get consumer status exception. topic={}, group={}, error={}",
-                        topic, group, e.toString());
+                        "[get-consumer-status] get consumer status exception. topic={}, group={}, offset={}",
+                        new Object[] {topic, group}, e);
                 }
 
                 if (!UtilAll.isBlank(originClientId) && originClientId.equals(clientId)) {

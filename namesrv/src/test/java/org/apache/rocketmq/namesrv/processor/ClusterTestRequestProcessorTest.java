@@ -52,7 +52,7 @@ import static org.mockito.Mockito.when;
 public class ClusterTestRequestProcessorTest {
     private ClusterTestRequestProcessor clusterTestProcessor;
     private DefaultMQAdminExtImpl defaultMQAdminExtImpl;
-    private MQClientInstance mqClientInstance = MQClientManager.getInstance().getOrCreateMQClientInstance(new ClientConfig());
+    private MQClientInstance mqClientInstance = MQClientManager.getInstance().getAndCreateMQClientInstance(new ClientConfig());
     private MQClientAPIImpl mQClientAPIImpl;
     private ChannelHandlerContext ctx;
 
@@ -99,8 +99,7 @@ public class ClusterTestRequestProcessorTest {
     @Test
     public void testGetRouteInfoByTopic() throws RemotingCommandException {
         RemotingCommand request = RemotingCommand.createRequestCommand(12, new CommandCustomHeader() {
-            @Override
-            public void checkFields() throws RemotingCommandException {
+            @Override public void checkFields() throws RemotingCommandException {
 
             }
         });

@@ -21,11 +21,24 @@ public class RequestCode {
 
     public static final int SEND_MESSAGE = 10;
 
+    /**
+     * 拉取 消息
+     * Consumer => Broker
+     * 时间：
+     *      - consumer拉取消息
+     * 请求：
+     *      - header：{@link org.apache.rocketmq.common.protocol.header.PullMessageRequestHeader}
+     * 响应：
+     *      - header: {@link org.apache.rocketmq.common.protocol.header.PullMessageResponseHeader}
+     */
     public static final int PULL_MESSAGE = 11;
 
     public static final int QUERY_MESSAGE = 12;
     public static final int QUERY_BROKER_OFFSET = 13;
     public static final int QUERY_CONSUMER_OFFSET = 14;
+    /**
+     * TODO
+     */
     public static final int UPDATE_CONSUMER_OFFSET = 15;
     public static final int UPDATE_AND_CREATE_TOPIC = 17;
     public static final int GET_ALL_TOPIC_CONFIG = 21;
@@ -68,28 +81,29 @@ public class RequestCode {
 
     public static final int GET_ALL_DELAY_OFFSET = 45;
 
-    public static final int CHECK_CLIENT_CONFIG = 46;
-
-    public static final int UPDATE_AND_CREATE_ACL_CONFIG = 50;
-
-    public static final int DELETE_ACL_CONFIG = 51;
-
-    public static final int GET_BROKER_CLUSTER_ACL_INFO = 52;
-
-    public static final int UPDATE_GLOBAL_WHITE_ADDRS_CONFIG = 53;
-
-    public static final int GET_BROKER_CLUSTER_ACL_CONFIG = 54;
-
     public static final int PUT_KV_CONFIG = 100;
 
     public static final int GET_KV_CONFIG = 101;
 
     public static final int DELETE_KV_CONFIG = 102;
 
+    /**
+     * 注册 Broker
+     * Broker => Namesrv
+     * 时间：
+     *      - Broker 初始化启动时
+     *      - Broker 每30秒注册次
+     */
     public static final int REGISTER_BROKER = 103;
-
+    /**
+     * 移除注册 Broker
+     * Broker => Namesrv
+     * 时间：
+     *      - Broker 关闭时
+     */
+    @SuppressWarnings("SpellCheckingInspection")
     public static final int UNREGISTER_BROKER = 104;
-    public static final int GET_ROUTEINFO_BY_TOPIC = 105;
+    public static final int GET_ROUTEINTO_BY_TOPIC = 105;
 
     public static final int GET_BROKER_CLUSTER_INFO = 106;
     public static final int UPDATE_AND_CREATE_SUBSCRIPTIONGROUP = 200;
@@ -171,21 +185,4 @@ public class RequestCode {
      * get config from name server
      */
     public static final int GET_NAMESRV_CONFIG = 319;
-
-    public static final int SEND_BATCH_MESSAGE = 320;
-
-    public static final int QUERY_CONSUME_QUEUE = 321;
-
-    public static final int QUERY_DATA_VERSION = 322;
-
-    /**
-     * resume logic of checking half messages that have been put in TRANS_CHECK_MAXTIME_TOPIC before
-     */
-    public static final int RESUME_CHECK_HALF_MESSAGE = 323;
-
-    public static final int SEND_REPLY_MESSAGE = 324;
-
-    public static final int SEND_REPLY_MESSAGE_V2 = 325;
-
-    public static final int PUSH_REPLY_MESSAGE_TO_CLIENT = 326;
 }

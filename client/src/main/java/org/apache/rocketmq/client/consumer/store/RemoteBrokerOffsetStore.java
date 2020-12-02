@@ -16,13 +16,6 @@
  */
 package org.apache.rocketmq.client.consumer.store;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.impl.FindBrokerResult;
@@ -30,21 +23,34 @@ import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.UtilAll;
-import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.header.QueryConsumerOffsetRequestHeader;
 import org.apache.rocketmq.common.protocol.header.UpdateConsumerOffsetRequestHeader;
 import org.apache.rocketmq.remoting.exception.RemotingException;
+import org.slf4j.Logger;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Remote storage implementation
  */
 public class RemoteBrokerOffsetStore implements OffsetStore {
-    private final static InternalLogger log = ClientLogger.getLog();
+
+    private final static Logger log = ClientLogger.getLog();
     private final MQClientInstance mQClientFactory;
+    /**
+     * 消费分组
+     */
     private final String groupName;
-    private ConcurrentMap<MessageQueue, AtomicLong> offsetTable =
-        new ConcurrentHashMap<MessageQueue, AtomicLong>();
+    /**
+     * 消费进度
+     */
+    private ConcurrentHashMap<MessageQueue, AtomicLong> offsetTable = new ConcurrentHashMap<>();
 
     public RemoteBrokerOffsetStore(MQClientInstance mQClientFactory, String groupName) {
         this.mQClientFactory = mQClientFactory;
@@ -55,6 +61,15 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
     public void load() {
     }
 
+    /**
+     * 更新消费进度,
+     * 并发消费模式进度只能增长
+     * 有序消费模式进度可以降低
+     *
+     * @param mq
+     * @param offset
+     * @param increaseOnly
+     */
     @Override
     public void updateOffset(MessageQueue mq, long offset, boolean increaseOnly) {
         if (mq != null) {
@@ -65,6 +80,7 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
 
             if (null != offsetOld) {
                 if (increaseOnly) {
+                    //进度更新只能增长，不能降低，多个线程同时更新时，只有比当前进度靠后的能更新
                     MixAll.compareAndIncreaseOnly(offsetOld, offset);
                 } else {
                     offsetOld.set(offset);
@@ -111,34 +127,41 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         return -1;
     }
 
+    /**
+     * 持久化指定消息队列数组的消费进度到Broker，并移除非指定消息队列
+     *
+     * @param mqs 指定消息队列
+     */
     @Override
     public void persistAll(Set<MessageQueue> mqs) {
-        if (null == mqs || mqs.isEmpty())
-            return;
+        if (null == mqs || mqs.isEmpty()) { return; }
 
-        final HashSet<MessageQueue> unusedMQ = new HashSet<MessageQueue>();
-
-        for (Map.Entry<MessageQueue, AtomicLong> entry : this.offsetTable.entrySet()) {
-            MessageQueue mq = entry.getKey();
-            AtomicLong offset = entry.getValue();
-            if (offset != null) {
-                if (mqs.contains(mq)) {
-                    try {
-                        this.updateConsumeOffsetToBroker(mq, offset.get());
-                        log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}",
-                            this.groupName,
-                            this.mQClientFactory.getClientId(),
-                            mq,
-                            offset.get());
-                    } catch (Exception e) {
-                        log.error("updateConsumeOffsetToBroker exception, " + mq.toString(), e);
+        // 持久化消息队列
+        final HashSet<MessageQueue> unusedMQ = new HashSet<>();
+        if (!mqs.isEmpty()) {
+            for (Map.Entry<MessageQueue, AtomicLong> entry : this.offsetTable.entrySet()) {
+                MessageQueue mq = entry.getKey();
+                AtomicLong offset = entry.getValue();
+                if (offset != null) {
+                    if (mqs.contains(mq)) {
+                        try {
+                            this.updateConsumeOffsetToBroker(mq, offset.get());
+                            log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}",
+                                this.groupName,
+                                this.mQClientFactory.getClientId(),
+                                mq,
+                                offset.get());
+                        } catch (Exception e) {
+                            log.error("updateConsumeOffsetToBroker exception, " + mq.toString(), e);
+                        }
+                    } else {
+                        unusedMQ.add(mq);
                     }
-                } else {
-                    unusedMQ.add(mq);
                 }
             }
         }
 
+        // 移除不适用的消息队列
         if (!unusedMQ.isEmpty()) {
             for (MessageQueue mq : unusedMQ) {
                 this.offsetTable.remove(mq);
@@ -147,6 +170,11 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         }
     }
 
+    /**
+     * 持久化队列消费进度到Broker
+     *
+     * @param mq MQ
+     */
     @Override
     public void persist(MessageQueue mq) {
         AtomicLong offset = this.offsetTable.get(mq);
@@ -186,7 +214,8 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
     }
 
     /**
-     * Update the Consumer Offset in one way, once the Master is off, updated to Slave, here need to be optimized.
+     * Update the Consumer Offset in one way, once the Master is off, updated to Slave,
+     * here need to be optimized.
      */
     private void updateConsumeOffsetToBroker(MessageQueue mq, long offset) throws RemotingException,
         MQBrokerException, InterruptedException, MQClientException {
@@ -194,13 +223,15 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
     }
 
     /**
-     * Update the Consumer Offset synchronously, once the Master is off, updated to Slave, here need to be optimized.
+     * Update the Consumer Offset synchronously, once the Master is off, updated to Slave,
+     * here need to be optimized.
      */
     @Override
     public void updateConsumeOffsetToBroker(MessageQueue mq, long offset, boolean isOneway) throws RemotingException,
         MQBrokerException, InterruptedException, MQClientException {
         FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInAdmin(mq.getBrokerName());
         if (null == findBrokerResult) {
+            // TODO Here may be heavily overhead for Name Server,need tuning
             this.mQClientFactory.updateTopicRouteInfoFromNameServer(mq.getTopic());
             findBrokerResult = this.mQClientFactory.findBrokerAddressInAdmin(mq.getBrokerName());
         }
@@ -224,11 +255,21 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         }
     }
 
+    /**
+     * 从Broker上获取指定MessageQueue的消费Offset
+     *
+     * @param mq
+     * @return
+     * @throws RemotingException
+     * @throws MQBrokerException
+     * @throws InterruptedException
+     * @throws MQClientException
+     */
     private long fetchConsumeOffsetFromBroker(MessageQueue mq) throws RemotingException, MQBrokerException,
         InterruptedException, MQClientException {
         FindBrokerResult findBrokerResult = this.mQClientFactory.findBrokerAddressInAdmin(mq.getBrokerName());
         if (null == findBrokerResult) {
-
+            // TODO Here may be heavily overhead for Name Server,need tuning
             this.mQClientFactory.updateTopicRouteInfoFromNameServer(mq.getTopic());
             findBrokerResult = this.mQClientFactory.findBrokerAddressInAdmin(mq.getBrokerName());
         }

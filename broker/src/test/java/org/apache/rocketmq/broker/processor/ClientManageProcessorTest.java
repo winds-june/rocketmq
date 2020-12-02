@@ -19,7 +19,6 @@ package org.apache.rocketmq.broker.processor;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.rocketmq.broker.BrokerController;
 import org.apache.rocketmq.broker.client.ClientChannelInfo;
@@ -82,7 +81,7 @@ public class ClientManageProcessorTest {
     @Test
     public void processRequest_UnRegisterProducer() throws Exception {
         brokerController.getProducerManager().registerProducer(group, clientChannelInfo);
-        Map<Channel, ClientChannelInfo> channelMap = brokerController.getProducerManager().getGroupChannelTable().get(group);
+        HashMap<Channel, ClientChannelInfo> channelMap = brokerController.getProducerManager().getGroupChannelTable().get(group);
         assertThat(channelMap).isNotNull();
         assertThat(channelMap.get(channel)).isEqualTo(clientChannelInfo);
 

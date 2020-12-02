@@ -20,8 +20,6 @@ package org.apache.rocketmq.common.stats;
 public class StatsSnapshot {
     private long sum;
     private double tps;
-
-    private long times;
     private double avgpt;
 
     public long getSum() {
@@ -46,13 +44,5 @@ public class StatsSnapshot {
 
     public void setAvgpt(double avgpt) {
         this.avgpt = avgpt;
-    }
-
-    public long getTimes() {
-        return times;
-    }
-
-    public void setTimes(long times) {
-        this.times = times;
     }
 }

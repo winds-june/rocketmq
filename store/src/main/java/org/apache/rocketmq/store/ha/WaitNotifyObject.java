@@ -16,19 +16,21 @@
  */
 package org.apache.rocketmq.store.ha;
 
-import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
-
 import java.util.HashMap;
-import java.util.Map;
 
+/**
+ * 等待通知对象
+ */
 public class WaitNotifyObject {
-    private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
-    protected final HashMap<Long/* thread id */, Boolean/* notified */> waitingThreadTable =
-        new HashMap<Long, Boolean>(16);
+    /**
+     * 线程 与 是否有通知 的映射
+     */
+    protected final HashMap<Long/* thread id */, Boolean/* notified */> waitingThreadTable = new HashMap<>(16);
 
+    /**
+     * Global 是否有通知
+     */
     protected volatile boolean hasNotified = false;
 
     public void wakeup() {
@@ -40,6 +42,11 @@ public class WaitNotifyObject {
         }
     }
 
+    /**
+     * （Global）等待执行
+     *
+     * @param interval 等待时长
+     */
     protected void waitForRunning(long interval) {
         synchronized (this) {
             if (this.hasNotified) {
@@ -51,7 +58,7 @@ public class WaitNotifyObject {
             try {
                 this.wait(interval);
             } catch (InterruptedException e) {
-                log.error("Interrupted", e);
+                e.printStackTrace();
             } finally {
                 this.hasNotified = false;
                 this.onWaitEnd();
@@ -66,9 +73,8 @@ public class WaitNotifyObject {
         synchronized (this) {
             boolean needNotify = false;
 
-            for (Map.Entry<Long,Boolean> entry : this.waitingThreadTable.entrySet()) {
-                needNotify = needNotify || !entry.getValue();
-                entry.setValue(true);
+            for (Boolean value : this.waitingThreadTable.values()) {
+                needNotify = needNotify || !value;
             }
 
             if (needNotify) {
@@ -77,6 +83,11 @@ public class WaitNotifyObject {
         }
     }
 
+    /**
+     * （线程）等待执行
+     *
+     * @param interval 等待时长
+     */
     public void allWaitForRunning(long interval) {
         long currentThreadId = Thread.currentThread().getId();
         synchronized (this) {
@@ -90,18 +101,11 @@ public class WaitNotifyObject {
             try {
                 this.wait(interval);
             } catch (InterruptedException e) {
-                log.error("Interrupted", e);
+                e.printStackTrace();
             } finally {
                 this.waitingThreadTable.put(currentThreadId, false);
                 this.onWaitEnd();
             }
-        }
-    }
-
-    public void removeFromWaitingThreadTable() {
-        long currentThreadId = Thread.currentThread().getId();
-        synchronized (this) {
-            this.waitingThreadTable.remove(currentThreadId);
         }
     }
 }

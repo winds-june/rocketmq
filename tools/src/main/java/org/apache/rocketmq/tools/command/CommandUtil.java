@@ -35,9 +35,6 @@ import org.apache.rocketmq.tools.admin.MQAdminExt;
 
 public class CommandUtil {
 
-    private static final String ERROR_MESSAGE = "Make sure the specified clusterName exists or the name server " +
-        "connected to is correct.";
-
     public static Map<String/*master addr*/, List<String>/*slave addr*/> fetchMasterAndSlaveDistinguish(
         final MQAdminExt adminExt, final String clusterName)
         throws InterruptedException, RemotingConnectException,
@@ -49,7 +46,8 @@ public class CommandUtil {
         Set<String> brokerNameSet = clusterInfoSerializeWrapper.getClusterAddrTable().get(clusterName);
 
         if (brokerNameSet == null) {
-            System.out.printf("[error] %s", ERROR_MESSAGE);
+            System.out
+                .printf("[error] Make sure the specified clusterName exists or the nameserver which connected is correct.");
             return masterAndSlaveMap;
         }
 
@@ -64,7 +62,8 @@ public class CommandUtil {
             masterAndSlaveMap.put(masterAddr, new ArrayList<String>());
 
             for (Long id : brokerData.getBrokerAddrs().keySet()) {
-                if (brokerData.getBrokerAddrs().get(id) == null || id == MixAll.MASTER_ID) {
+                if (brokerData.getBrokerAddrs().get(id) == null
+                    || id.longValue() == MixAll.MASTER_ID) {
                     continue;
                 }
 
@@ -96,7 +95,8 @@ public class CommandUtil {
                 }
             }
         } else {
-            System.out.printf("[error] %s", ERROR_MESSAGE);
+            System.out
+                .printf("[error] Make sure the specified clusterName exists or the nameserver which connected is correct.");
         }
 
         return masterSet;
@@ -105,22 +105,26 @@ public class CommandUtil {
     public static Set<String> fetchMasterAndSlaveAddrByClusterName(final MQAdminExt adminExt, final String clusterName)
         throws InterruptedException, RemotingConnectException, RemotingTimeoutException,
         RemotingSendRequestException, MQBrokerException {
-        Set<String> brokerAddressSet = new HashSet<String>();
+        Set<String> masterSet = new HashSet<String>();
+
         ClusterInfo clusterInfoSerializeWrapper = adminExt.examineBrokerClusterInfo();
+
         Set<String> brokerNameSet = clusterInfoSerializeWrapper.getClusterAddrTable().get(clusterName);
+
         if (brokerNameSet != null) {
             for (String brokerName : brokerNameSet) {
                 BrokerData brokerData = clusterInfoSerializeWrapper.getBrokerAddrTable().get(brokerName);
                 if (brokerData != null) {
                     final Collection<String> addrs = brokerData.getBrokerAddrs().values();
-                    brokerAddressSet.addAll(addrs);
+                    masterSet.addAll(addrs);
                 }
             }
         } else {
-            System.out.printf("[error] %s", ERROR_MESSAGE);
+            System.out
+                .printf("[error] Make sure the specified clusterName exists or the nameserver which connected is correct.");
         }
 
-        return brokerAddressSet;
+        return masterSet;
     }
 
     public static Set<String> fetchBrokerNameByClusterName(final MQAdminExt adminExt, final String clusterName)
@@ -128,23 +132,25 @@ public class CommandUtil {
         ClusterInfo clusterInfoSerializeWrapper = adminExt.examineBrokerClusterInfo();
         Set<String> brokerNameSet = clusterInfoSerializeWrapper.getClusterAddrTable().get(clusterName);
         if (brokerNameSet.isEmpty()) {
-            throw new Exception(ERROR_MESSAGE);
+            throw new Exception(
+                "Make sure the specified clusterName exists or the nameserver which connected is correct.");
         }
         return brokerNameSet;
     }
 
     public static String fetchBrokerNameByAddr(final MQAdminExt adminExt, final String addr) throws Exception {
         ClusterInfo clusterInfoSerializeWrapper = adminExt.examineBrokerClusterInfo();
-        HashMap<String/* brokerName */, BrokerData> brokerAddrTable = clusterInfoSerializeWrapper.getBrokerAddrTable();
+        HashMap<String/* brokerName */, BrokerData> brokerAddrTable =
+            clusterInfoSerializeWrapper.getBrokerAddrTable();
         Iterator<Map.Entry<String, BrokerData>> it = brokerAddrTable.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, BrokerData> entry = it.next();
             HashMap<Long, String> brokerAddrs = entry.getValue().getBrokerAddrs();
-            if (brokerAddrs.containsValue(addr)) {
+            if (brokerAddrs.containsValue(addr))
                 return entry.getKey();
-            }
         }
-        throw new Exception(ERROR_MESSAGE);
+        throw new Exception(
+            "Make sure the specified broker addr exists or the nameserver which connected is correct.");
     }
 
 }

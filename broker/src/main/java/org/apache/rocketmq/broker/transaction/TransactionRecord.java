@@ -14,15 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.rocketmq.broker.transaction;
 
 /**
- * This class will be removed in the version 4.4.0 and {@link OperationResult} class is recommended.
+ * 事务记录
  */
-@Deprecated
 public class TransactionRecord {
-    // Commit Log Offset
+    /**
+     * Commit Log Offset
+     */
     private long offset;
+    /**
+     * producerGroup
+     */
     private String producerGroup;
 
     public long getOffset() {

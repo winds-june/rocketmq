@@ -27,7 +27,6 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.command.SubCommand;
-import org.apache.rocketmq.tools.command.SubCommandException;
 
 public class CheckMsgSendRTCommand implements SubCommand {
     private static String brokerName = "";
@@ -49,7 +48,7 @@ public class CheckMsgSendRTCommand implements SubCommand {
         opt.setRequired(true);
         options.addOption(opt);
 
-        opt = new Option("a", "amount", true, "message amount | default 100");
+        opt = new Option("a", "amout", true, "message amout | default 100");
         opt.setRequired(false);
         options.addOption(opt);
 
@@ -60,7 +59,7 @@ public class CheckMsgSendRTCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) throws SubCommandException {
+    public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         DefaultMQProducer producer = new DefaultMQProducer(rpcHook);
         producer.setProducerGroup(Long.toString(System.currentTimeMillis()));
 
@@ -118,7 +117,7 @@ public class CheckMsgSendRTCommand implements SubCommand {
             double rt = (double) timeElapsed / (amount - 1);
             System.out.printf("Avg RT: %s%n", String.format("%.2f", rt));
         } catch (Exception e) {
-            throw new SubCommandException(this.getClass().getSimpleName() + " command failed", e);
+            e.printStackTrace();
         } finally {
             producer.shutdown();
         }

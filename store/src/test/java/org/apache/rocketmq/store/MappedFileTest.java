@@ -20,11 +20,7 @@
  */
 package org.apache.rocketmq.store;
 
-import java.io.File;
 import java.io.IOException;
-
-import org.apache.rocketmq.common.UtilAll;
-import org.junit.After;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,11 +46,5 @@ public class MappedFileTest {
         selectMappedBufferResult.release();
         assertThat(mappedFile.isCleanupOver()).isTrue();
         assertThat(mappedFile.destroy(1000)).isTrue();
-    }
-
-    @After
-    public void destory() {
-        File file = new File("target/unit_test_store");
-        UtilAll.deleteFile(file);
     }
 }

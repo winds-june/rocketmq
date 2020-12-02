@@ -17,8 +17,6 @@
 
 package org.apache.rocketmq.common;
 
-import org.apache.rocketmq.logging.InternalLogger;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -27,10 +25,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.slf4j.Logger;
 
 public class Configuration {
 
-    private final InternalLogger log;
+    private final Logger log;
 
     private List<Object> configObjectList = new ArrayList<Object>(4);
     private String storePath;
@@ -44,11 +43,11 @@ public class Configuration {
      */
     private Properties allConfigs = new Properties();
 
-    public Configuration(InternalLogger log) {
+    public Configuration(Logger log) {
         this.log = log;
     }
 
-    public Configuration(InternalLogger log, Object... configObjects) {
+    public Configuration(Logger log, Object... configObjects) {
         this.log = log;
         if (configObjects == null || configObjects.length == 0) {
             return;
@@ -58,7 +57,7 @@ public class Configuration {
         }
     }
 
-    public Configuration(InternalLogger log, String storePath, Object... configObjects) {
+    public Configuration(Logger log, String storePath, Object... configObjects) {
         this(log, configObjects);
         this.storePath = storePath;
     }
@@ -66,6 +65,7 @@ public class Configuration {
     /**
      * register config object
      *
+     * @param configObject
      * @return the current Configuration object
      */
     public Configuration registerConfig(Object configObject) {
@@ -91,6 +91,7 @@ public class Configuration {
     /**
      * register config properties
      *
+     * @param extProperties
      * @return the current Configuration object
      */
     public Configuration registerConfig(Properties extProperties) {
@@ -116,6 +117,8 @@ public class Configuration {
     /**
      * The store path will be gotten from the field of object.
      *
+     * @param object
+     * @param fieldName
      * @throws java.lang.RuntimeException if the field of object is not exist.
      */
     public void setStorePathFromConfig(Object object, String fieldName) {

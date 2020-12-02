@@ -49,7 +49,7 @@ public class OrderMsgIT extends BaseConf {
 
     @After
     public void tearDown() {
-        shutdown();
+        shutDown();
     }
 
     @Test
@@ -59,13 +59,13 @@ public class OrderMsgIT extends BaseConf {
         MessageQueueMsg mqMsgs = new MessageQueueMsg(mqs, msgSize);
         producer.send(mqMsgs.getMsgsWithMQ());
 
-        consumer.getListener().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+        consumer.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
 
         assertThat(VerifyUtils.getFilterdMessage(producer.getAllMsgBody(),
-            consumer.getListener().getAllMsgBody()))
+            consumer.getListner().getAllMsgBody()))
             .containsExactlyElementsIn(mqMsgs.getMsgBodys());
 
-        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListener()).getMsgs()))
+        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListner()).getMsgs()))
             .isEqualTo(true);
     }
 
@@ -77,13 +77,13 @@ public class OrderMsgIT extends BaseConf {
             msgSize);
         producer.send(mqMsgs.getMsgsWithMQ());
 
-        consumer.getListener().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+        consumer.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
 
         assertThat(VerifyUtils.getFilterdMessage(producer.getAllMsgBody(),
-            consumer.getListener().getAllMsgBody()))
+            consumer.getListner().getAllMsgBody()))
             .containsExactlyElementsIn(mqMsgs.getMsgBodys());
 
-        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListener()).getMsgs()))
+        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListner()).getMsgs()))
             .isEqualTo(true);
     }
 
@@ -96,13 +96,13 @@ public class OrderMsgIT extends BaseConf {
             msgSize);
         producer.send(mqMsgs.getMsgsWithMQ());
 
-        consumer.getListener().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
+        consumer.getListner().waitForMessageConsume(producer.getAllMsgBody(), consumeTime);
 
         assertThat(VerifyUtils.getFilterdMessage(producer.getAllMsgBody(),
-            consumer.getListener().getAllMsgBody()))
+            consumer.getListner().getAllMsgBody()))
             .containsExactlyElementsIn(mqMsgs.getMsgBodys());
 
-        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListener()).getMsgs()))
+        assertThat(VerifyUtils.verifyOrder(((RMQOrderListener) consumer.getListner()).getMsgs()))
             .isEqualTo(true);
     }
 }

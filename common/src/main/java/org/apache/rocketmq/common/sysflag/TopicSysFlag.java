@@ -16,6 +16,9 @@
  */
 package org.apache.rocketmq.common.sysflag;
 
+/**
+ * TODO 疑问
+ */
 public class TopicSysFlag {
 
     private final static int FLAG_UNIT = 0x1 << 0;

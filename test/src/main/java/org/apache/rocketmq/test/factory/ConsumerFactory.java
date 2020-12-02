@@ -17,28 +17,18 @@
 
 package org.apache.rocketmq.test.factory;
 
-import java.util.UUID;
-import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
-import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.test.client.rmq.RMQBroadCastConsumer;
 import org.apache.rocketmq.test.client.rmq.RMQNormalConsumer;
-import org.apache.rocketmq.test.client.rmq.RMQSqlConsumer;
 import org.apache.rocketmq.test.listener.AbstractListener;
 
 public class ConsumerFactory {
 
     public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup,
         String topic, String subExpression,
-        AbstractListener listener) {
-        return getRMQNormalConsumer(nsAddr, consumerGroup, topic, subExpression, listener, false);
-    }
-
-    public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup,
-        String topic, String subExpression,
-        AbstractListener listener, boolean useTLS) {
+        AbstractListener listner) {
         RMQNormalConsumer consumer = new RMQNormalConsumer(nsAddr, topic, subExpression,
-            consumerGroup, listener);
-        consumer.create(useTLS);
+            consumerGroup, listner);
+        consumer.create();
         consumer.start();
         return consumer;
     }
@@ -51,23 +41,5 @@ public class ConsumerFactory {
         consumer.create();
         consumer.start();
         return consumer;
-    }
-
-    public static RMQSqlConsumer getRMQSqlConsumer(String nsAddr, String consumerGroup,
-        String topic, MessageSelector selector,
-        AbstractListener listner) {
-        RMQSqlConsumer consumer = new RMQSqlConsumer(nsAddr, topic, selector,
-            consumerGroup, listner);
-        consumer.create();
-        consumer.start();
-        return consumer;
-    }
-
-    public static DefaultMQPullConsumer getRMQPullConsumer(String nsAddr, String consumerGroup) throws Exception {
-        DefaultMQPullConsumer defaultMQPullConsumer = new DefaultMQPullConsumer(consumerGroup);
-        defaultMQPullConsumer.setInstanceName(UUID.randomUUID().toString());
-        defaultMQPullConsumer.setNamesrvAddr(nsAddr);
-        defaultMQPullConsumer.start();
-        return defaultMQPullConsumer;
     }
 }

@@ -18,33 +18,30 @@ package org.apache.rocketmq.store;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
+/**
+ * 消息过滤实现
+ */
 public class DefaultMessageFilter implements MessageFilter {
 
-    private SubscriptionData subscriptionData;
-
-    public DefaultMessageFilter(final SubscriptionData subscriptionData) {
-        this.subscriptionData = subscriptionData;
-    }
-
     @Override
-    public boolean isMatchedByConsumeQueue(Long tagsCode, ConsumeQueueExt.CqExtUnit cqExtUnit) {
-        if (null == tagsCode || null == subscriptionData) {
+    public boolean isMessageMatched(SubscriptionData subscriptionData, Long tagsCode) {
+        // 消息tagsCode 空
+        if (tagsCode == null) {
             return true;
         }
-
-        if (subscriptionData.isClassFilterMode()) {
+        // 订阅数据 空
+        if (null == subscriptionData) {
             return true;
         }
-
-        return subscriptionData.getSubString().equals(SubscriptionData.SUB_ALL)
-            || subscriptionData.getCodeSet().contains(tagsCode.intValue());
+        // classFilter
+        if (subscriptionData.isClassFilterMode())
+            return true;
+        // 订阅表达式 全匹配
+        if (subscriptionData.getSubString().equals(SubscriptionData.SUB_ALL)) {
+            return true;
+        }
+        // 订阅数据code数组 是否包含 消息tagsCode
+        return subscriptionData.getCodeSet().contains(tagsCode.intValue());
     }
 
-    @Override
-    public boolean isMatchedByCommitLog(ByteBuffer msgBuffer, Map<String, String> properties) {
-        return true;
-    }
 }

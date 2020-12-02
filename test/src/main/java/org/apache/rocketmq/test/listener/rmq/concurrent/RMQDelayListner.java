@@ -49,7 +49,7 @@ public class RMQDelayListner extends AbstractListener implements MessageListener
         long recvTime = System.currentTimeMillis();
         for (MessageExt msg : msgs) {
             if (isDebug) {
-                logger.info(listenerName + ":" + msg);
+                logger.info(listnerName + ":" + msg);
             }
 
             msgBodys.addData(new String(msg.getBody()));
