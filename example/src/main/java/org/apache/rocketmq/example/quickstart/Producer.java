@@ -34,7 +34,9 @@ public class Producer {
         DefaultMQProducer producer = new DefaultMQProducer("please_rename_unique_group_name");
 
         producer.setNamesrvAddr("127.0.0.1:9876"); // TODO add by yunai
-//        producer.setSendLatencyFaultEnable(true);
+
+        //不指定一个topic默认queue=4
+        producer.setDefaultTopicQueueNums(2);
         /*
          * Specify name server addresses.
          * <p/>
@@ -54,10 +56,7 @@ public class Producer {
 
 //        Thread.sleep(10000000L);
 
-        String body = "";
-        for (int i = 0; i < 10 * 1024; i++) {
-            body += "" + i;
-        }
+        String body = "我是MQ测试数据...";
 
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
             try {
@@ -65,26 +64,15 @@ public class Producer {
                 /*
                  * Create a message instance, specifying topic, tag and message body.
                  */
-
-                Message msg = new Message("TopicTest_mis" /* Topic */,
-                    "TagA" /* Tag */,
-                    (body).getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
-                );
+                Message msg = new Message("TopicTest_mis", "TagA", (body).getBytes(RemotingHelper.DEFAULT_CHARSET));
 
                 /*
                  * Call send message to deliver message to one of brokers.
                  */
                 SendResult sendResult = producer.send(msg);
-//                producer.send(msg);
-//                producer.sendOneway(msg);
-
 
                 System.out.printf("%s%n", sendResult);
                 break;
-//                System.out.println(i);
-//                if (i % 10000 == 0) {
-//                    System.out.println("sendOneway：" + i);
-//                }
             } catch (Exception e) {
                 e.printStackTrace();
                 Thread.sleep(1000);
